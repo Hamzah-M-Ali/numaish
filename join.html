@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Join Numaish</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <section id="join-page">
+    <div id="join-card">
+      <h1>Join the Numaish Community</h1>
+
+      <p>
+        Join Numaish to discover artists, sell your work, and connect with the community.
+      </p>
+
+      <form id="join-form">
+        <input 
+          type="text"
+          id="fullName"
+          placeholder="Full Name"
+          required
+        >
+
+        <input
+          type="email"
+          id="email"
+          placeholder="Email Address" 
+          required
+        >
+        <select id="user-type" required>
+
+          <option value="">I am a...</option>
+          <option value="artist">
+            Artist
+          </option>
+        <option value="patron">
+          Community Member
+        </option>
+
+        </select>
+        <button type="submit">Join Now</button>
+      </form>
+
+      <a href="index.html" id="back-home">← Back to Home</a>
+    </div>
+  </section>
+
+  <script>
+  document.getElementById("join-form").addEventListener("submit", async function(e) {
+
+    e.preventDefault();
+
+    const data = {
+      fullName: document.getElementById("fullName").value,
+      email: document.getElementById("email").value,
+      userType: document.getElementById("user-type").value
+    };
+
+    try {
+
+      const response = await fetch("http://localhost:3000/api/join", {
+
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify(data)
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+
+        alert("Successfully joined!");
+
+        document.getElementById("join-form").reset();
+
+      } else {
+
+        alert(result.error);
+      }
+
+    } catch (err) {
+
+      console.error(err);
+
+      alert("Could not connect to server");
+    }
+  });
+  </script>
+</body>
+</html>
