@@ -1136,3 +1136,123 @@ footer {
 #empty-state a:hover {
   opacity: 0.9;
 }
+
+
+@media (max-width: 768px) {
+  #navbar {
+    padding: 18px 20px;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  #logo-image {
+    width: 130px;
+    max-width: 130px;
+    max-height: none;
+  }
+
+  #nav-links {
+    gap: 14px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  #nav-links a {
+    font-size: 16px;
+  }
+
+  section,
+  #hero,
+  #about-page,
+  #contact-page,
+  #discover-page,
+  #wedding-section {
+    padding: 50px 22px;
+  }
+
+  #hero {
+    min-height: auto;
+  }
+
+  #logo-image-big {
+    max-width: 280px;
+    max-height: none;
+  }
+
+  #hero-text h2 {
+    font-size: 28px;
+  }
+
+  #hero-text p {
+    font-size: 18px;
+  }
+
+  #about h1,
+  #about-page h1,
+  #contact-page h1,
+  .discover-title,
+  .craft-title {
+    font-size: 48px;
+    line-height: 1.05;
+  }
+
+  #language-line {
+    gap: 18px;
+    font-size: 18px;
+  }
+
+  #contact-subtitle,
+  .discover-subtitle,
+  .craft-subtitle {
+    font-size: 19px;
+  }
+
+  #contact-options,
+  #input-row,
+  #story-grid {
+    grid-template-columns: 1fr;
+  }
+
+  #contact-form {
+    margin-top: 50px;
+  }
+
+  .contact-option {
+    padding: 20px;
+  }
+
+  #wedding-section {
+    flex-direction: column;
+    gap: 40px;
+  }
+
+  .wedding-title {
+    font-size: 46px;
+  }
+
+  .wedding-text {
+    font-size: 20px;
+  }
+
+  #wedding-right {
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .wedding-card,
+  .large-card,
+  .medium-card {
+    min-height: 160px;
+    font-size: 32px;
+  }
+
+  #join-card,
+  #signin-card {
+    padding: 30px 22px;
+  }
+
+  #join-card h1,
+  #signin-card h1 {
+    font-size: 38px;
+  }
+}
