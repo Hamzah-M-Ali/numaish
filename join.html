@@ -43,6 +43,7 @@
         </select>
         <button type="submit">Join Now</button>
       </form>
+      <div id="form-message"></div>
 
       <a href="index.html" id="back-home">← Back to Home</a>
     </div>
@@ -53,6 +54,13 @@
 
     e.preventDefault();
 
+    const submitBtn = document.getElementById("submit-btn");
+    const message = document.getElementById("form-message");
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Submitting...";
+    message.textContent = "";
+
     const data = {
       fullName: document.getElementById("fullName").value,
       email: document.getElementById("email").value,
@@ -61,14 +69,11 @@
 
     try {
 
-        const response = await fetch("https://numaish-backend.onrender.com/api/join", {
-
+      const response = await fetch("https://numaish-backend.onrender.com/api/join", {
         method: "POST",
-
         headers: {
           "Content-Type": "application/json"
         },
-
         body: JSON.stringify(data)
       });
 
@@ -76,20 +81,28 @@
 
       if (response.ok) {
 
-        alert("Successfully joined!");
+        message.textContent = "✓ Thank you for joining Numaish!";
+        message.className = "success-message";
 
         document.getElementById("join-form").reset();
 
       } else {
 
-        alert(result.error);
+        message.textContent = result.error;
+        message.className = "error-message";
       }
 
     } catch (err) {
 
       console.error(err);
 
-      alert("Could not connect to server");
+      message.textContent = "Could not connect to server.";
+      message.className = "error-message";
+
+    } finally {
+
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Join Now";
     }
   });
   </script>

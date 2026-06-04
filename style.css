@@ -1256,3 +1256,17 @@ footer {
     font-size: 38px;
   }
 }
+
+#form-message {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 18px;
+}
+
+.success-message {
+  color: #2e7d32;
+}
+
+.error-message {
+  color: #c62828;
+}
