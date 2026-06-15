@@ -26,7 +26,7 @@
         <a href="discover.html"><b>Discover Artists</b></a>
         <a href="about.html"><b>About Us</b></a>
         <a href="contact.html"><b>Contact</b></a>
-        <a href="signin.html"><b>Sign in</b></a>
+        <a href="signin.html" id="auth-link"><b>Sign in</b></a>
     </nav>
 
 
@@ -150,5 +150,27 @@
     </p>
 
   </footer>
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+    const supabaseUrl = "https://oaqmbdfkkxzrznzsfzug.supabase.co";
+    const supabaseAnonKey = "sb_publishable_nKY-APQwA4523dOvdBn3Jg_SGBUyMGo";
+
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+    const { data } = await supabase.auth.getSession();
+
+    const authLink = document.getElementById("auth-link");
+
+    if (authLink) {
+      if (data.session) {
+        authLink.innerHTML = "<b>Account</b>";
+        authLink.href = "dashboard.html";
+      } else {
+        authLink.innerHTML = "<b>Sign in</b>";
+        authLink.href = "signin.html";
+      }
+    }
+  </script>
 </body>
 </html>

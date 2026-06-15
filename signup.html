@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <title>Sign Up - Numaish</title>
+
   <link rel="stylesheet" href="style.css">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -25,7 +26,7 @@
     <a href="discover.html"><b>Discover Artists</b></a>
     <a href="about.html"><b>About Us</b></a>
     <a href="contact.html"><b>Contact</b></a>
-    <a href="signin.html"><b>Sign in</b></a>
+    <a href="signin.html" id="auth-link"><b>Sign in</b></a>
   </nav>
 </header>
 
@@ -47,7 +48,12 @@
 
       <div class="signin-input-group">
         <label>Password</label>
-        <input id="signup-password" type="password" placeholder="Create a password" required>
+        <input id="signup-password" type="password" placeholder="Create a password" minlength="8" required>
+      </div>
+
+      <div class="signin-input-group">
+        <label>Confirm Password</label>
+        <input id="signup-password-confirm" type="password" placeholder="Confirm your password" minlength="8" required>
       </div>
 
       <button type="submit" id="signup-button">
@@ -77,17 +83,39 @@
 
   const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+  const { data: { session } } = await supabase.auth.getSession();
+
+  const authLink = document.getElementById("auth-link");
+
+  if (session) {
+    authLink.innerHTML = "<b>Account</b>";
+    authLink.href = "dashboard.html";
+    window.location.href = "dashboard.html";
+  }
+
   document.getElementById("signup-form").addEventListener("submit", async function(e) {
     e.preventDefault();
 
     const email = document.getElementById("signup-email").value;
     const password = document.getElementById("signup-password").value;
+    const confirmPassword = document.getElementById("signup-password-confirm").value;
+
     const button = document.getElementById("signup-button");
     const message = document.getElementById("signup-message");
 
     button.disabled = true;
     button.textContent = "Creating account...";
     message.textContent = "";
+    message.className = "";
+
+    if (password !== confirmPassword) {
+      message.textContent = "Passwords do not match.";
+      message.className = "error-message";
+
+      button.disabled = false;
+      button.textContent = "Create Account";
+      return;
+    }
 
     const { data, error } = await supabase.auth.signUp({
       email: email,
@@ -96,12 +124,26 @@
 
     if (error) {
       message.textContent = error.message;
+      message.className = "error-message";
+
       button.disabled = false;
       button.textContent = "Create Account";
       return;
     }
 
-    message.textContent = "Account created! Check your email to confirm your account.";
+    if (data.session) {
+      message.textContent = "✓ Account created successfully!";
+      message.className = "success-message";
+
+      setTimeout(() => {
+        window.location.href = "dashboard.html";
+      }, 1500);
+
+    } else {
+      message.textContent = "✓ Account created! Check your email to verify your account.";
+      message.className = "success-message";
+    }
+
     button.disabled = false;
     button.textContent = "Create Account";
   });

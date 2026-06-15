@@ -13,57 +13,25 @@
 
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<script type="module">
-  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-  const supabaseUrl = "https://oaqmbdfkkxzrznzsfzug.supabase.co";
-  const supabaseAnonKey = "sb_publishable_nKY-APQwA4523dOvdBn3Jg_SGBUyMGo";
-
-  const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-  document.getElementById("signin-form").addEventListener("submit", async function(e) {
-    e.preventDefault();
-
-    const email = document.getElementById("signin-email").value;
-    const password = document.getElementById("signin-password").value;
-    const button = document.getElementById("signin-button");
-
-    button.disabled = true;
-    button.textContent = "Signing in...";
-
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: email,
-      password: password
-    });
-
-    if (error) {
-      alert(error.message);
-      button.disabled = false;
-      button.textContent = "Sign In";
-      return;
-    }
-
-    window.location.href = "dashboard.html";
-  });
-</script>
 <body>
 
-    <header id="navbar">
+  <header id="navbar">
 
     <div id="logo-container">
-        <a href="index.html">
+      <a href="index.html">
         <img src="media/logoN.png" alt="Numaish Logo" id="logo-image">
-        </a>
+      </a>
     </div>
 
     <nav id="nav-links">
-        <a href="discover.html"><b>Discover Artists</b></a>
-        <a href="about.html"><b>About Us</b></a>
-        <a href="contact.html"><b>Contact</b></a>
-        <a href="signin.html"><b>Sign in</b></a>
+      <a href="discover.html"><b>Discover Artists</b></a>
+      <a href="about.html"><b>About Us</b></a>
+      <a href="contact.html"><b>Contact</b></a>
+      <a href="signin.html" id="auth-link"><b>Sign in</b></a>
     </nav>
 
-    </header>
+  </header>
 
   <section id="signin-page">
 
@@ -72,7 +40,7 @@
       <h1>Welcome to Numaish</h1>
 
       <p>
-        Sign in to your account or apply to join as an artist.
+        Sign in to your account to discover and connect with South Asian artists.
       </p>
 
       <div id="signin-tabs">
@@ -96,7 +64,6 @@
 
         <div class="signin-input-group">
           <label>Password</label>
-
           <input id="signin-password" type="password" placeholder="Enter your password" required>
         </div>
 
@@ -106,15 +73,65 @@
 
       </form>
 
+      <div id="signin-message"></div>
+
     </div>
 
   </section>
-  <footer>
 
+  <footer>
     <p>
       © 2026 Numaish. All rights reserved.
     </p>
-
   </footer>
+
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+    const supabaseUrl = "https://oaqmbdfkkxzrznzsfzug.supabase.co";
+    const supabaseAnonKey = "sb_publishable_nKY-APQwA4523dOvdBn3Jg_SGBUyMGo";
+
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+    const { data: { session } } = await supabase.auth.getSession();
+
+    const authLink = document.getElementById("auth-link");
+
+    if (session) {
+      authLink.innerHTML = "<b>Account</b>";
+      authLink.href = "dashboard.html";
+      window.location.href = "dashboard.html";
+    }
+
+    document.getElementById("signin-form").addEventListener("submit", async function(e) {
+      e.preventDefault();
+
+      const email = document.getElementById("signin-email").value;
+      const password = document.getElementById("signin-password").value;
+      const button = document.getElementById("signin-button");
+      const message = document.getElementById("signin-message");
+
+      button.disabled = true;
+      button.textContent = "Signing in...";
+      message.textContent = "";
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password
+      });
+
+      if (error) {
+        message.textContent = error.message;
+        message.className = "error-message";
+
+        button.disabled = false;
+        button.textContent = "Sign In";
+        return;
+      }
+
+      window.location.href = "dashboard.html";
+    });
+  </script>
+
 </body>
 </html>
