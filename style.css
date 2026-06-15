@@ -1501,3 +1501,45 @@ footer {
   border-radius: 8px;
   cursor: pointer;
 }
+
+.profile-input-group select {
+  width: 100%;
+  padding: 14px;
+  border: 1px solid #d8c2b3;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 16px;
+  background: white;
+  color: #333;
+}
+
+.location-container {
+  position: relative;
+}
+
+#location-results {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 0;
+  width: 100%;
+  max-height: 250px;
+  overflow-y: auto;
+
+  background: white;
+  border: 1px solid #d8c2b3;
+  border-radius: 12px;
+
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+
+  z-index: 1000;
+  display: none;
+}
+
+.location-option {
+  padding: 14px 16px;
+  cursor: pointer;
+}
+
+.location-option:hover {
+  background: #f7efe7;
+}

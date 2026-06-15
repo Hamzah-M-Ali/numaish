@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Account - Numaish</title>
+
   <link rel="stylesheet" href="style.css">
 </head>
 
@@ -33,6 +34,7 @@
     <div id="profile-layout">
 
       <div id="profile-left">
+
         <div id="pfp-circle">
           <span id="pfp-placeholder">Profile Photo</span>
           <img id="pfp-preview" src="" alt="Profile picture" style="display:none;">
@@ -42,6 +44,7 @@
 
         <button id="save-profile-button">Save Profile</button>
         <button id="logout-button">Log Out</button>
+
       </div>
 
       <div id="profile-right">
@@ -58,34 +61,56 @@
 
         <div class="profile-input-group">
           <label>Location</label>
-          <input id="location" type="text" placeholder="City, State or Country">
+
+          <div class="location-container">
+            <input
+              id="location"
+              type="text"
+              placeholder="Search for your city"
+              autocomplete="off"
+            >
+
+            <div id="location-results"></div>
+          </div>
         </div>
 
         <div class="profile-input-group">
           <label>Specialty</label>
-          <input id="specialty" type="text" placeholder="Painting, calligraphy, pottery, photography, etc.">
-        </div>
-        <div class="profile-input-group">
-        <label>Artwork Showcase</label>
 
-        <div id="artwork-grid">
-            <div class="artwork-upload-box">
-            <span>+ Add Artwork</span>
-            <input type="file" id="artwork-upload" accept="image/*">
-            </div>
+          <select id="specialty">
+            <option value="">Select your specialty</option>
+            <option value="Block Printing">Block Printing</option>
+            <option value="Calligraphy">Calligraphy</option>
+            <option value="Jewelry">Jewelry</option>
+            <option value="Language Art">Language Art</option>
+            <option value="Mixed Media">Mixed Media</option>
+            <option value="Painting">Painting</option>
+            <option value="Photography">Photography</option>
+            <option value="Pottery">Pottery</option>
+            <option value="Sculpture">Sculpture</option>
+            <option value="Textile Art">Textile Art</option>
+            <option value="Wedding Decor">Wedding Decor</option>
+            <option value="Woodwork">Woodwork</option>
+          </select>
         </div>
-        </div>
+
         <div class="profile-input-group">
-          <label>Reviews</label>
-          <div id="reviews-box">
-            <p>No reviews yet.</p>
+          <label>Artwork Showcase</label>
+
+          <div id="artwork-grid">
+            <div class="artwork-upload-box">
+              <span>+ Add Artwork</span>
+              <input type="file" id="artwork-upload" accept="image/*">
+            </div>
           </div>
         </div>
 
         <p id="profile-message"></p>
 
       </div>
+
     </div>
+
   </div>
 </section>
 
@@ -99,9 +124,13 @@
   const supabaseUrl = "https://oaqmbdfkkxzrznzsfzug.supabase.co";
   const supabaseAnonKey = "sb_publishable_nKY-APQwA4523dOvdBn3Jg_SGBUyMGo";
 
+  const GEOAPIFY_API_KEY = "96c65a4245de4a9cbb1b41e3207210d9";
+
   const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-  const { data: { session } } = await supabase.auth.getSession();
+  const {
+    data: { session }
+  } = await supabase.auth.getSession();
 
   if (!session) {
     window.location.href = "signin.html";
@@ -113,111 +142,23 @@
   const profileName = document.getElementById("profile-name");
   const aboutMe = document.getElementById("about-me");
   const locationInput = document.getElementById("location");
+  const locationResults = document.getElementById("location-results");
   const specialty = document.getElementById("specialty");
+
   const pfpUpload = document.getElementById("pfp-upload");
   const pfpPreview = document.getElementById("pfp-preview");
   const pfpPlaceholder = document.getElementById("pfp-placeholder");
+
+  const artworkGrid = document.getElementById("artwork-grid");
+  const artworkUpload = document.getElementById("artwork-upload");
+
   const message = document.getElementById("profile-message");
   const saveButton = document.getElementById("save-profile-button");
 
+  let locationTimeout;
+
   userEmail.textContent = `Signed in as ${user.email}`;
-  const artworkGrid = document.getElementById("artwork-grid");
-    const artworkUpload = document.getElementById("artwork-upload");
 
-    async function loadArtwork() {
-    const { data, error } = await supabase
-        .from("artworks")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-
-    if (error) {
-        message.textContent = error.message;
-        message.className = "error-message";
-        return;
-    }
-
-    data.forEach((artwork) => {
-        const artworkCard = document.createElement("div");
-        artworkCard.className = "artwork-card";
-
-        artworkCard.innerHTML = `
-        <img src="${artwork.image_url}" alt="Artwork">
-        <button class="delete-artwork-button" data-id="${artwork.id}">
-            Delete
-        </button>
-        `;
-
-        artworkGrid.appendChild(artworkCard);
-    });
-    }
-
-    artworkUpload.addEventListener("change", async function() {
-    const file = artworkUpload.files[0];
-
-    if (!file) return;
-
-    message.textContent = "Uploading artwork...";
-    message.className = "";
-
-    const fileExt = file.name.split(".").pop();
-    const filePath = `${user.id}/${Date.now()}.${fileExt}`;
-
-    const { error: uploadError } = await supabase.storage
-        .from("artwork-images")
-        .upload(filePath, file);
-
-    if (uploadError) {
-        message.textContent = uploadError.message;
-        message.className = "error-message";
-        return;
-    }
-
-    const { data: publicUrlData } = supabase.storage
-        .from("artwork-images")
-        .getPublicUrl(filePath);
-
-    const imageUrl = publicUrlData.publicUrl;
-
-    const { error: insertError } = await supabase
-        .from("artworks")
-        .insert({
-        user_id: user.id,
-        image_url: imageUrl
-        });
-
-    if (insertError) {
-        message.textContent = insertError.message;
-        message.className = "error-message";
-        return;
-    }
-
-    message.textContent = "✓ Artwork uploaded!";
-    message.className = "success-message";
-
-    location.reload();
-    });
-
-    artworkGrid.addEventListener("click", async function(e) {
-    if (!e.target.classList.contains("delete-artwork-button")) return;
-
-    const artworkId = e.target.dataset.id;
-
-    const { error } = await supabase
-        .from("artworks")
-        .delete()
-        .eq("id", artworkId);
-
-    if (error) {
-        message.textContent = error.message;
-        message.className = "error-message";
-        return;
-    }
-
-    location.reload();
-    });
-
-    loadArtwork();
   async function loadProfile() {
     const { data, error } = await supabase
       .from("profiles")
@@ -245,21 +186,95 @@
     }
   }
 
-  pfpUpload.addEventListener("change", function() {
+  async function loadArtwork() {
+    const { data, error } = await supabase
+      .from("artworks")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+
+    if (error) return;
+
+    data.forEach((artwork) => {
+      const artworkCard = document.createElement("div");
+
+      artworkCard.className = "artwork-card";
+
+      artworkCard.innerHTML = `
+        <img src="${artwork.image_url}" alt="Artwork">
+        <button class="delete-artwork-button" data-id="${artwork.id}">
+          Delete
+        </button>
+      `;
+
+      artworkGrid.appendChild(artworkCard);
+    });
+  }
+
+  pfpUpload.addEventListener("change", () => {
     const file = pfpUpload.files[0];
 
-    if (file) {
-      pfpPreview.src = URL.createObjectURL(file);
-      pfpPreview.style.display = "block";
-      pfpPlaceholder.style.display = "none";
-    }
+    if (!file) return;
+
+    pfpPreview.src = URL.createObjectURL(file);
+    pfpPreview.style.display = "block";
+    pfpPlaceholder.style.display = "none";
   });
 
-  saveButton.addEventListener("click", async function() {
+  artworkUpload.addEventListener("change", async () => {
+    const file = artworkUpload.files[0];
+
+    if (!file) return;
+
+    message.textContent = "Uploading artwork...";
+
+    const fileExt = file.name.split(".").pop();
+    const filePath = `${user.id}/${Date.now()}.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("artwork-images")
+      .upload(filePath, file);
+
+    if (uploadError) {
+      message.textContent = uploadError.message;
+      message.className = "error-message";
+      return;
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from("artwork-images")
+      .getPublicUrl(filePath);
+
+    const { error: insertError } = await supabase
+      .from("artworks")
+      .insert({
+        user_id: user.id,
+        image_url: publicUrlData.publicUrl
+      });
+
+    if (insertError) {
+      message.textContent = insertError.message;
+      message.className = "error-message";
+      return;
+    }
+
+    location.reload();
+  });
+
+  artworkGrid.addEventListener("click", async (e) => {
+    if (!e.target.classList.contains("delete-artwork-button")) return;
+
+    await supabase
+      .from("artworks")
+      .delete()
+      .eq("id", e.target.dataset.id);
+
+    location.reload();
+  });
+
+  saveButton.addEventListener("click", async () => {
     saveButton.disabled = true;
     saveButton.textContent = "Saving...";
-    message.textContent = "";
-    message.className = "";
 
     let pfpUrl = pfpPreview.src || null;
 
@@ -271,15 +286,15 @@
 
       const { error: uploadError } = await supabase.storage
         .from("profile-pictures")
-        .upload(filePath, file, {
-          upsert: true
-        });
+        .upload(filePath, file, { upsert: true });
 
       if (uploadError) {
         message.textContent = uploadError.message;
         message.className = "error-message";
+
         saveButton.disabled = false;
         saveButton.textContent = "Save Profile";
+
         return;
       }
 
@@ -320,7 +335,71 @@
     window.location.href = "signin.html";
   });
 
-  loadProfile();
+  locationInput.addEventListener("input", () => {
+    clearTimeout(locationTimeout);
+
+    const query = locationInput.value.trim();
+
+    if (query.length < 2) {
+      locationResults.innerHTML = "";
+      locationResults.style.display = "none";
+      return;
+    }
+
+    locationTimeout = setTimeout(async () => {
+      try {
+        const response = await fetch(
+          `https://api.geoapify.com/v1/geocode/autocomplete?text=${encodeURIComponent(query)}&type=city&limit=5&apiKey=${GEOAPIFY_API_KEY}`
+        );
+
+        const data = await response.json();
+
+        locationResults.innerHTML = "";
+
+        if (!data.features?.length) {
+          locationResults.style.display = "none";
+          return;
+        }
+
+        data.features.forEach((feature) => {
+          const city = feature.properties.city;
+          const state = feature.properties.state;
+          const country = feature.properties.country;
+
+          if (!city || !country) return;
+          const locationText = state
+            ? `${city}, ${state}, ${country}`
+            : `${city}, ${country}`;
+          const option = document.createElement("div");
+
+          option.className = "location-option";
+          option.textContent = locationText;
+
+          option.addEventListener("click", () => {
+            locationInput.value = locationText;
+            locationResults.style.display = "none";
+          });
+
+          locationResults.appendChild(option);
+        });
+
+        locationResults.style.display = "block";
+
+      } catch (error) {
+        console.error(error);
+      }
+    }, 300);
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!event.target.closest(".location-container")) {
+      locationResults.style.display = "none";
+    }
+  });
+
+  await loadProfile();
+  await loadArtwork();
+
 </script>
 
 </body>
