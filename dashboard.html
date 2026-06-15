@@ -3,86 +3,325 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <title>My Account - Numaish</title>
-
   <link rel="stylesheet" href="style.css">
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 
 <body>
 
-  <header id="navbar">
+<header id="navbar">
+  <div id="logo-container">
+    <a href="index.html">
+      <img src="media/logoN.png" alt="Numaish Logo" id="logo-image">
+    </a>
+  </div>
 
-    <div id="logo-container">
-      <a href="index.html">
-        <img src="media/logoN.png" alt="Numaish Logo" id="logo-image">
-      </a>
+  <nav id="nav-links">
+    <a href="discover.html"><b>Discover Artists</b></a>
+    <a href="about.html"><b>About Us</b></a>
+    <a href="contact.html"><b>Contact</b></a>
+    <a href="dashboard.html" id="auth-link"><b>Account</b></a>
+  </nav>
+</header>
+
+<section id="account-page">
+  <div id="account-card">
+
+    <h1>My Profile</h1>
+    <p id="user-email">Loading...</p>
+
+    <div id="profile-layout">
+
+      <div id="profile-left">
+        <div id="pfp-circle">
+          <span id="pfp-placeholder">Profile Photo</span>
+          <img id="pfp-preview" src="" alt="Profile picture" style="display:none;">
+        </div>
+
+        <input type="file" id="pfp-upload" accept="image/*">
+
+        <button id="save-profile-button">Save Profile</button>
+        <button id="logout-button">Log Out</button>
+      </div>
+
+      <div id="profile-right">
+
+        <div class="profile-input-group">
+          <label>Profile Name</label>
+          <input id="profile-name" type="text" placeholder="Your name">
+        </div>
+
+        <div class="profile-input-group">
+          <label>About Me</label>
+          <textarea id="about-me" placeholder="Tell people about yourself, your art, and your story."></textarea>
+        </div>
+
+        <div class="profile-input-group">
+          <label>Location</label>
+          <input id="location" type="text" placeholder="City, State or Country">
+        </div>
+
+        <div class="profile-input-group">
+          <label>Specialty</label>
+          <input id="specialty" type="text" placeholder="Painting, calligraphy, pottery, photography, etc.">
+        </div>
+        <div class="profile-input-group">
+        <label>Artwork Showcase</label>
+
+        <div id="artwork-grid">
+            <div class="artwork-upload-box">
+            <span>+ Add Artwork</span>
+            <input type="file" id="artwork-upload" accept="image/*">
+            </div>
+        </div>
+        </div>
+        <div class="profile-input-group">
+          <label>Reviews</label>
+          <div id="reviews-box">
+            <p>No reviews yet.</p>
+          </div>
+        </div>
+
+        <p id="profile-message"></p>
+
+      </div>
     </div>
+  </div>
+</section>
 
-    <nav id="nav-links">
-      <a href="discover.html"><b>Discover Artists</b></a>
-      <a href="about.html"><b>About Us</b></a>
-      <a href="contact.html"><b>Contact</b></a>
-      <a href="dashboard.html" id="auth-link"><b>Account</b></a>
-    </nav>
+<footer>
+  <p>© 2026 Numaish. All rights reserved.</p>
+</footer>
 
-  </header>
+<script type="module">
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-  <section id="signin-page">
+  const supabaseUrl = "https://oaqmbdfkkxzrznzsfzug.supabase.co";
+  const supabaseAnonKey = "sb_publishable_nKY-APQwA4523dOvdBn3Jg_SGBUyMGo";
 
-    <div id="signin-card">
+  const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-      <h1>My Account</h1>
+  const { data: { session } } = await supabase.auth.getSession();
 
-      <p id="user-email">
-        Loading...
-      </p>
+  if (!session) {
+    window.location.href = "signin.html";
+  }
 
-      <button id="logout-button">
-        Log Out
-      </button>
+  const user = session.user;
 
-    </div>
+  const userEmail = document.getElementById("user-email");
+  const profileName = document.getElementById("profile-name");
+  const aboutMe = document.getElementById("about-me");
+  const locationInput = document.getElementById("location");
+  const specialty = document.getElementById("specialty");
+  const pfpUpload = document.getElementById("pfp-upload");
+  const pfpPreview = document.getElementById("pfp-preview");
+  const pfpPlaceholder = document.getElementById("pfp-placeholder");
+  const message = document.getElementById("profile-message");
+  const saveButton = document.getElementById("save-profile-button");
 
-  </section>
+  userEmail.textContent = `Signed in as ${user.email}`;
+  const artworkGrid = document.getElementById("artwork-grid");
+    const artworkUpload = document.getElementById("artwork-upload");
 
-  <footer>
-    <p>© 2026 Numaish. All rights reserved.</p>
-  </footer>
+    async function loadArtwork() {
+    const { data, error } = await supabase
+        .from("artworks")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
 
-  <script type="module">
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-
-    const supabaseUrl = "https://oaqmbdfkkxzrznzsfzug.supabase.co";
-    const supabaseAnonKey = "sb_publishable_nKY-APQwA4523dOvdBn3Jg_SGBUyMGo";
-
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-    const {
-      data: { session }
-    } = await supabase.auth.getSession();
-
-    if (!session) {
-      window.location.href = "signin.html";
+    if (error) {
+        message.textContent = error.message;
+        message.className = "error-message";
+        return;
     }
 
-    document.getElementById("user-email").textContent =
-      `Signed in as ${session.user.email}`;
+    data.forEach((artwork) => {
+        const artworkCard = document.createElement("div");
+        artworkCard.className = "artwork-card";
 
-    document
-      .getElementById("logout-button")
-      .addEventListener("click", async () => {
+        artworkCard.innerHTML = `
+        <img src="${artwork.image_url}" alt="Artwork">
+        <button class="delete-artwork-button" data-id="${artwork.id}">
+            Delete
+        </button>
+        `;
 
-        await supabase.auth.signOut();
+        artworkGrid.appendChild(artworkCard);
+    });
+    }
 
-        window.location.href = "signin.html";
+    artworkUpload.addEventListener("change", async function() {
+    const file = artworkUpload.files[0];
+
+    if (!file) return;
+
+    message.textContent = "Uploading artwork...";
+    message.className = "";
+
+    const fileExt = file.name.split(".").pop();
+    const filePath = `${user.id}/${Date.now()}.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+        .from("artwork-images")
+        .upload(filePath, file);
+
+    if (uploadError) {
+        message.textContent = uploadError.message;
+        message.className = "error-message";
+        return;
+    }
+
+    const { data: publicUrlData } = supabase.storage
+        .from("artwork-images")
+        .getPublicUrl(filePath);
+
+    const imageUrl = publicUrlData.publicUrl;
+
+    const { error: insertError } = await supabase
+        .from("artworks")
+        .insert({
+        user_id: user.id,
+        image_url: imageUrl
+        });
+
+    if (insertError) {
+        message.textContent = insertError.message;
+        message.className = "error-message";
+        return;
+    }
+
+    message.textContent = "✓ Artwork uploaded!";
+    message.className = "success-message";
+
+    location.reload();
+    });
+
+    artworkGrid.addEventListener("click", async function(e) {
+    if (!e.target.classList.contains("delete-artwork-button")) return;
+
+    const artworkId = e.target.dataset.id;
+
+    const { error } = await supabase
+        .from("artworks")
+        .delete()
+        .eq("id", artworkId);
+
+    if (error) {
+        message.textContent = error.message;
+        message.className = "error-message";
+        return;
+    }
+
+    location.reload();
+    });
+
+    loadArtwork();
+  async function loadProfile() {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+
+    if (error && error.code !== "PGRST116") {
+      message.textContent = error.message;
+      message.className = "error-message";
+      return;
+    }
+
+    if (data) {
+      profileName.value = data.profile_name || "";
+      aboutMe.value = data.about_me || "";
+      locationInput.value = data.location || "";
+      specialty.value = data.specialty || "";
+
+      if (data.pfp_url) {
+        pfpPreview.src = data.pfp_url;
+        pfpPreview.style.display = "block";
+        pfpPlaceholder.style.display = "none";
+      }
+    }
+  }
+
+  pfpUpload.addEventListener("change", function() {
+    const file = pfpUpload.files[0];
+
+    if (file) {
+      pfpPreview.src = URL.createObjectURL(file);
+      pfpPreview.style.display = "block";
+      pfpPlaceholder.style.display = "none";
+    }
+  });
+
+  saveButton.addEventListener("click", async function() {
+    saveButton.disabled = true;
+    saveButton.textContent = "Saving...";
+    message.textContent = "";
+    message.className = "";
+
+    let pfpUrl = pfpPreview.src || null;
+
+    const file = pfpUpload.files[0];
+
+    if (file) {
+      const fileExt = file.name.split(".").pop();
+      const filePath = `${user.id}/profile.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("profile-pictures")
+        .upload(filePath, file, {
+          upsert: true
+        });
+
+      if (uploadError) {
+        message.textContent = uploadError.message;
+        message.className = "error-message";
+        saveButton.disabled = false;
+        saveButton.textContent = "Save Profile";
+        return;
+      }
+
+      const { data: publicUrlData } = supabase.storage
+        .from("profile-pictures")
+        .getPublicUrl(filePath);
+
+      pfpUrl = publicUrlData.publicUrl;
+    }
+
+    const { error } = await supabase
+      .from("profiles")
+      .upsert({
+        id: user.id,
+        email: user.email,
+        profile_name: profileName.value,
+        about_me: aboutMe.value,
+        location: locationInput.value,
+        specialty: specialty.value,
+        pfp_url: pfpUrl,
+        updated_at: new Date()
       });
-  </script>
+
+    if (error) {
+      message.textContent = error.message;
+      message.className = "error-message";
+    } else {
+      message.textContent = "✓ Profile saved successfully!";
+      message.className = "success-message";
+    }
+
+    saveButton.disabled = false;
+    saveButton.textContent = "Save Profile";
+  });
+
+  document.getElementById("logout-button").addEventListener("click", async () => {
+    await supabase.auth.signOut();
+    window.location.href = "signin.html";
+  });
+
+  loadProfile();
+</script>
 
 </body>
 </html>
