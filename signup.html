@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Sign Up - Numaish</title>
+  <link rel="stylesheet" href="style.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+<header id="navbar">
+  <div id="logo-container">
+    <a href="index.html">
+      <img src="media/logoN.png" alt="Numaish Logo" id="logo-image">
+    </a>
+  </div>
+
+  <nav id="nav-links">
+    <a href="discover.html"><b>Discover Artists</b></a>
+    <a href="about.html"><b>About Us</b></a>
+    <a href="contact.html"><b>Contact</b></a>
+    <a href="signin.html"><b>Sign in</b></a>
+  </nav>
+</header>
+
+<section id="signin-page">
+  <div id="signin-card">
+
+    <h1>Create Your Numaish Account</h1>
+
+    <p>
+      Sign up to join the Numaish community.
+    </p>
+
+    <form id="signup-form">
+
+      <div class="signin-input-group">
+        <label>Email</label>
+        <input id="signup-email" type="email" placeholder="your@email.com" required>
+      </div>
+
+      <div class="signin-input-group">
+        <label>Password</label>
+        <input id="signup-password" type="password" placeholder="Create a password" required>
+      </div>
+
+      <button type="submit" id="signup-button">
+        Create Account
+      </button>
+
+    </form>
+
+    <p id="signup-message"></p>
+
+    <a href="signin.html" id="signup-link">
+      Already have an account? Sign in
+    </a>
+
+  </div>
+</section>
+
+<footer>
+  <p>© 2026 Numaish. All rights reserved.</p>
+</footer>
+
+<script type="module">
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+  const supabaseUrl = "https://oaqmbdfkkxzrznzsfzug.supabase.co";
+  const supabaseAnonKey = "sb_publishable_nKY-APQwA4523dOvdBn3Jg_SGBUyMGo";
+
+  const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+  document.getElementById("signup-form").addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    const email = document.getElementById("signup-email").value;
+    const password = document.getElementById("signup-password").value;
+    const button = document.getElementById("signup-button");
+    const message = document.getElementById("signup-message");
+
+    button.disabled = true;
+    button.textContent = "Creating account...";
+    message.textContent = "";
+
+    const { data, error } = await supabase.auth.signUp({
+      email: email,
+      password: password
+    });
+
+    if (error) {
+      message.textContent = error.message;
+      button.disabled = false;
+      button.textContent = "Create Account";
+      return;
+    }
+
+    message.textContent = "Account created! Check your email to confirm your account.";
+    button.disabled = false;
+    button.textContent = "Create Account";
+  });
+</script>
+
+</body>
+</html>

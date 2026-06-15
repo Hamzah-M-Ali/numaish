@@ -13,7 +13,39 @@
 
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
+<script type="module">
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
+  const supabaseUrl = "https://oaqmbdfkkxzrznzsfzug.supabase.co";
+  const supabaseAnonKey = "sb_publishable_nKY-APQwA4523dOvdBn3Jg_SGBUyMGo";
+
+  const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+  document.getElementById("signin-form").addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    const email = document.getElementById("signin-email").value;
+    const password = document.getElementById("signin-password").value;
+    const button = document.getElementById("signin-button");
+
+    button.disabled = true;
+    button.textContent = "Signing in...";
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email,
+      password: password
+    });
+
+    if (error) {
+      alert(error.message);
+      button.disabled = false;
+      button.textContent = "Sign In";
+      return;
+    }
+
+    window.location.href = "dashboard.html";
+  });
+</script>
 <body>
 
     <header id="navbar">
@@ -49,7 +81,7 @@
           Sign In
         </button>
 
-        <a href="join.html" id="signup-link">
+        <a href="signup.html" id="signup-link">
           Sign Up
         </a>
 
@@ -59,20 +91,13 @@
 
         <div class="signin-input-group">
           <label>Email</label>
-
-          <input
-            type="email"
-            placeholder="your@email.com"
-          >
+          <input id="signin-email" type="email" placeholder="your@email.com" required>
         </div>
 
         <div class="signin-input-group">
           <label>Password</label>
 
-          <input
-            type="password"
-            placeholder="Enter your password"
-          >
+          <input id="signin-password" type="password" placeholder="Enter your password" required>
         </div>
 
         <button type="submit" id="signin-button">
