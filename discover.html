@@ -16,93 +16,373 @@
 
 <body>
 
-  <!-- NAVBAR -->
+<header id="navbar">
+  <div id="logo-container">
+    <a href="index.html">
+      <img src="media/logoN.png" alt="Numaish Logo" id="logo-image">
+    </a>
+  </div>
 
-    <header id="navbar">
+  <nav id="nav-links">
+    <a href="discover.html"><b>Discover Artists</b></a>
+    <a href="about.html"><b>About Us</b></a>
+    <a href="contact.html"><b>Contact</b></a>
+    <a href="signin.html" id="auth-link"><b>Sign in</b></a>
+  </nav>
+</header>
 
-    <div id="logo-container">
-        <a href="index.html">
-        <img src="media/logoN.png" alt="Numaish Logo" id="logo-image">
-        </a>
+<section id="discover-page">
+
+  <div id="discover-header">
+
+    <div>
+      <h1 class="discover-title">
+        Discover Artists
+      </h1>
+
+      <p class="discover-subtitle">
+        South Asian artists sharing their craft and stories.
+      </p>
     </div>
 
-    <nav id="nav-links">
-        <a href="discover.html"><b>Discover Artists</b></a>
-        <a href="about.html"><b>About Us</b></a>
-        <a href="contact.html"><b>Contact</b></a>
-        <a href="signin.html" id="auth-link"><b>Sign in</b></a>
-    </nav>
+    <button id="open-artist-form" style="display: none;">
+      Post Your Art
+    </button>
 
+  </div>
 
+  <div id="discover-tags">
+    <div class="discover-tag active-tag">All</div>
+    <div class="discover-tag">Block Printing</div>
+    <div class="discover-tag">Calligraphy</div>
+    <div class="discover-tag">Jewelry</div>
+    <div class="discover-tag">Language Art</div>
+    <div class="discover-tag">Mixed Media</div>
+    <div class="discover-tag">Painting</div>
+    <div class="discover-tag">Photography</div>
+    <div class="discover-tag">Pottery</div>
+    <div class="discover-tag">Sculpture</div>
+    <div class="discover-tag">Textile Art</div>
+    <div class="discover-tag">Wedding Decor</div>
+    <div class="discover-tag">Woodwork</div>
+  </div>
 
-    </header>
+  <div id="artist-form-container" style="display: none;">
 
-  <!-- DISCOVER -->
+    <h2>Post as an Artist</h2>
 
-  <section id="discover-page">
+    <form id="artist-form">
 
-    <h1 class="discover-title">
-      Discover Artists
-    </h1>
+      <select id="artist-specialty" required>
+        <option value="">Select Specialty</option>
+        <option value="Block Printing">Block Printing</option>
+        <option value="Calligraphy">Calligraphy</option>
+        <option value="Jewelry">Jewelry</option>
+        <option value="Language Art">Language Art</option>
+        <option value="Mixed Media">Mixed Media</option>
+        <option value="Painting">Painting</option>
+        <option value="Photography">Photography</option>
+        <option value="Pottery">Pottery</option>
+        <option value="Sculpture">Sculpture</option>
+        <option value="Textile Art">Textile Art</option>
+        <option value="Wedding Decor">Wedding Decor</option>
+        <option value="Woodwork">Woodwork</option>
+      </select>
 
-    <p class="discover-subtitle">
-      South Asian artists sharing their craft and stories.
-    </p>
+      <div class="location-container">
+        <input
+          id="artist-location"
+          type="text"
+          placeholder="Search for your city"
+          autocomplete="off"
+          required
+        >
 
-    <div id="discover-tags">
+        <div id="artist-location-results"></div>
+      </div>
 
-      <div class="discover-tag active-tag">All</div>
+      <textarea
+        id="artist-bio"
+        placeholder="Short bio"
+      ></textarea>
 
-      <div class="discover-tag">Block Printing</div>
-      <div class="discover-tag">Calligraphy</div>
-      <div class="discover-tag">Jewelry</div>
-      <div class="discover-tag">Language Art</div>
-      <div class="discover-tag">Mixed Media</div>
-      <div class="discover-tag">Painting</div>
-      <div class="discover-tag">Photography</div>
-      <div class="discover-tag">Pottery</div>
-      <div class="discover-tag">Sculpture</div>
-      <div class="discover-tag">Textile Art</div>
-      <div class="discover-tag">Wedding Decor</div>
-      <div class="discover-tag">Woodwork</div>
+      <input
+        type="file"
+        id="artist-image"
+        accept="image/*"
+        required
+      >
 
-    </div>
+      <button type="submit">
+        Post Artist Profile
+      </button>
 
-    <div id="empty-state">
-      No artists yet.
-      <br><br>
-      <a href="join.html">Interested in joining? Click here.</a>
-    </div>
+    </form>
 
-  </section>
-  <footer>
+  </div>
 
-    <p>
-      © 2026 Numaish. All rights reserved.
-    </p>
+  <div id="artist-grid"></div>
 
-  </footer>
-  <script type="module">
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+  <div id="empty-state">
+    No artists yet.
+    <br><br>
+    <a href="join.html">Interested in joining? Click here.</a>
+  </div>
 
-    const supabaseUrl = "https://oaqmbdfkkxzrznzsfzug.supabase.co";
-    const supabaseAnonKey = "sb_publishable_nKY-APQwA4523dOvdBn3Jg_SGBUyMGo";
+</section>
 
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+<footer>
+  <p>© 2026 Numaish. All rights reserved.</p>
+</footer>
 
-    const { data } = await supabase.auth.getSession();
+<script type="module">
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-    const authLink = document.getElementById("auth-link");
+  const supabaseUrl = "https://oaqmbdfkkxzrznzsfzug.supabase.co";
+  const supabaseAnonKey = "sb_publishable_nKY-APQwA4523dOvdBn3Jg_SGBUyMGo";
+  const GEOAPIFY_API_KEY = "YOUR_GEOAPIFY_API_KEY";
 
-    if (authLink) {
-      if (data.session) {
-        authLink.innerHTML = "<b>Account</b>";
-        authLink.href = "dashboard.html";
-      } else {
-        authLink.innerHTML = "<b>Sign in</b>";
-        authLink.href = "signin.html";
-      }
+  const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+  const authLink = document.getElementById("auth-link");
+  const artistGrid = document.getElementById("artist-grid");
+  const emptyState = document.getElementById("empty-state");
+  const artistFormContainer = document.getElementById("artist-form-container");
+  const artistForm = document.getElementById("artist-form");
+  const tags = document.querySelectorAll(".discover-tag");
+  const openArtistFormButton = document.getElementById("open-artist-form");
+
+  const artistLocationInput = document.getElementById("artist-location");
+  const artistLocationResults = document.getElementById("artist-location-results");
+
+  let selectedTag = "All";
+  let artistLocationTimeout;
+  let profile = null;
+
+  const { data } = await supabase.auth.getSession();
+  const session = data.session;
+
+  if (session) {
+    authLink.innerHTML = "<b>Account</b>";
+    authLink.href = "dashboard.html";
+
+    openArtistFormButton.style.display = "block";
+
+    const { data: profileData } = await supabase
+      .from("profiles")
+      .select("profile_name, about_me, location, specialty")
+      .eq("id", session.user.id)
+      .single();
+
+    profile = profileData;
+  }
+
+  openArtistFormButton.addEventListener("click", () => {
+    const isHidden = artistFormContainer.style.display === "none";
+
+    artistFormContainer.style.display = isHidden ? "block" : "none";
+
+    openArtistFormButton.textContent = isHidden
+      ? "Cancel"
+      : "Post Your Art";
+
+    if (isHidden && profile) {
+      document.getElementById("artist-specialty").value =
+        profile.specialty || "";
+
+      artistLocationInput.value = profile.location || "";
+
+      document.getElementById("artist-bio").value =
+        profile.about_me || "";
     }
-  </script>
+  });
+
+  async function loadArtists() {
+    let query = supabase
+      .from("artists")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (selectedTag !== "All") {
+      query = query.eq("specialty", selectedTag);
+    }
+
+    const { data: artists, error } = await query;
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    artistGrid.innerHTML = "";
+
+    if (!artists || artists.length === 0) {
+      emptyState.style.display = "block";
+      return;
+    }
+
+    emptyState.style.display = "none";
+
+    artists.forEach((artist) => {
+      const card = document.createElement("div");
+
+      card.className = "artist-card";
+
+      card.innerHTML = `
+        ${artist.image_url ? `<img src="${artist.image_url}" alt="${artist.name}">` : ""}
+        <h3>${artist.name}</h3>
+
+        <span class="specialty">${artist.specialty}</span>
+
+        <p class="location">${artist.location || ""}</p>
+
+        <p class="bio">${artist.bio || ""}</p>
+      `;
+
+      artistGrid.appendChild(card);
+    });
+  }
+
+  tags.forEach((tag) => {
+    tag.addEventListener("click", () => {
+      tags.forEach((t) => t.classList.remove("active-tag"));
+
+      tag.classList.add("active-tag");
+
+      selectedTag = tag.textContent.trim();
+
+      loadArtists();
+    });
+  });
+
+  artistLocationInput.addEventListener("input", () => {
+    clearTimeout(artistLocationTimeout);
+
+    const query = artistLocationInput.value.trim();
+
+    if (query.length < 2) {
+      artistLocationResults.innerHTML = "";
+      artistLocationResults.style.display = "none";
+      return;
+    }
+
+    artistLocationTimeout = setTimeout(async () => {
+      const response = await fetch(
+        `https://api.geoapify.com/v1/geocode/autocomplete?text=${encodeURIComponent(query)}&type=city&limit=5&apiKey=${GEOAPIFY_API_KEY}`
+      );
+
+      const data = await response.json();
+
+      artistLocationResults.innerHTML = "";
+
+      if (!data.features?.length) {
+        artistLocationResults.style.display = "none";
+        return;
+      }
+
+      data.features.forEach((feature) => {
+        const city = feature.properties.city;
+        const state = feature.properties.state;
+        const country = feature.properties.country;
+
+        if (!city || !country) return;
+
+        const locationText = state
+          ? `${city}, ${state}, ${country}`
+          : `${city}, ${country}`;
+
+        const option = document.createElement("div");
+
+        option.className = "location-option";
+        option.textContent = locationText;
+
+        option.addEventListener("click", () => {
+          artistLocationInput.value = locationText;
+          artistLocationResults.style.display = "none";
+        });
+
+        artistLocationResults.appendChild(option);
+      });
+
+      artistLocationResults.style.display = "block";
+    }, 300);
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!event.target.closest(".location-container")) {
+      artistLocationResults.style.display = "none";
+    }
+  });
+
+  artistForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    if (!session) {
+      alert("Please sign in first.");
+      return;
+    }
+
+    if (!profile?.profile_name) {
+      alert("Please complete your profile before posting.");
+      window.location.href = "dashboard.html";
+      return;
+    }
+
+    const imageFile = document.getElementById("artist-image").files[0];
+
+    let imageUrl = "";
+
+    if (imageFile) {
+      const fileExt = imageFile.name.split(".").pop();
+
+      const fileName = `${session.user.id}-${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("artist-images")
+        .upload(fileName, imageFile);
+
+      if (uploadError) {
+        console.error(uploadError);
+        alert("Failed to upload image.");
+        return;
+      }
+
+      const { data: publicData } = supabase.storage
+        .from("artist-images")
+        .getPublicUrl(fileName);
+
+      imageUrl = publicData.publicUrl;
+    }
+
+    const artist = {
+      user_id: session.user.id,
+      name: profile.profile_name,
+      specialty: document.getElementById("artist-specialty").value,
+      location: artistLocationInput.value,
+      bio: document.getElementById("artist-bio").value,
+      image_url: imageUrl
+    };
+
+    const { error } = await supabase
+      .from("artists")
+      .insert([artist]);
+
+    if (error) {
+      console.error(error);
+      alert("Something went wrong.");
+      return;
+    }
+
+    artistForm.reset();
+
+    artistFormContainer.style.display = "none";
+    openArtistFormButton.textContent = "Post Your Art";
+
+    loadArtists();
+  });
+
+  loadArtists();
+</script>
+
 </body>
 </html>

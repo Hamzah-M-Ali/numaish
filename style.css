@@ -1543,3 +1543,161 @@ footer {
 .location-option:hover {
   background: #f7efe7;
 }
+
+#artist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 30px;
+  margin-top: 50px;
+}
+
+.artist-card {
+  background: #fffaf4;
+  border: 1px solid #e5d6c5;
+  border-radius: 18px;
+  padding: 25px;
+  text-align: center;
+}
+
+.artist-card img {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  border-radius: 14px;
+  margin-bottom: 20px;
+}
+
+.artist-card h3 {
+  font-size: 28px;
+  margin-bottom: 20px;
+  color: #5c2e1f;
+}
+
+.artist-card .specialty {
+  display: block;
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 28px;
+  color: #333;
+}
+
+.artist-card .location {
+  margin-bottom: 24px;
+  line-height: 1.5;
+  color: #555;
+}
+
+.artist-card .bio {
+  line-height: 1.7;
+  color: #4a4038;
+}
+
+#artist-form-container {
+  max-width: 600px;
+  margin: 40px auto;
+  background: #fffaf4;
+  padding: 30px;
+  border-radius: 18px;
+}
+
+#artist-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+#artist-form input,
+#artist-form select,
+#artist-form textarea {
+  padding: 14px;
+  border: 1px solid #d8c4ad;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 16px;
+}
+
+#artist-form textarea {
+  min-height: 120px;
+}
+
+#artist-form button {
+  padding: 14px;
+  border: none;
+  border-radius: 10px;
+  background: #5c2e1f;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.location-container {
+  position: relative;
+  width: 100%;
+}
+
+#artist-location-results {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background: white;
+  border: 1px solid #d8c4ad;
+  border-radius: 10px;
+  margin-top: 5px;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.location-option {
+  padding: 12px 14px;
+  cursor: pointer;
+  color: #4a4038;
+  font-size: 16px;
+}
+
+.location-option:hover {
+  background: #f5eadf;
+}
+
+#discover-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+#open-artist-form {
+  padding: 14px 28px;
+
+  background: #5c2e1f;
+  color: white;
+
+  border: none;
+  border-radius: 10px;
+
+  font-size: 16px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  flex-shrink: 0;
+
+  transition: opacity 0.2s ease;
+}
+
+#open-artist-form:hover {
+  opacity: 0.9;
+}
+
+@media (max-width: 768px) {
+  #discover-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  #open-artist-form {
+    width: 100%;
+  }
+}
