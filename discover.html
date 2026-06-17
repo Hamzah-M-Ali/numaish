@@ -7,6 +7,7 @@
   <title>Discover Artists - Numaish</title>
 
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="discover.css">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -34,21 +35,12 @@
 <section id="discover-page">
 
   <div id="discover-header">
-
     <div>
-      <h1 class="discover-title">
-        Discover Artists
-      </h1>
-
-      <p class="discover-subtitle">
-        South Asian artists sharing their craft and stories.
-      </p>
+      <h1 class="discover-title">Discover Artists</h1>
+      <p class="discover-subtitle">South Asian artists sharing their craft and stories.</p>
     </div>
 
-    <button id="open-artist-form" style="display: none;">
-      Post Your Art
-    </button>
-
+    <button id="open-artist-form" style="display: none;">Post Your Art</button>
   </div>
 
   <div id="discover-tags">
@@ -68,11 +60,9 @@
   </div>
 
   <div id="artist-form-container" style="display: none;">
-
-    <h2>Post as an Artist</h2>
+    <h2 id="artist-form-title">Post as an Artist</h2>
 
     <form id="artist-form">
-
       <select id="artist-specialty" required>
         <option value="">Select Specialty</option>
         <option value="Block Printing">Block Printing</option>
@@ -90,35 +80,27 @@
       </select>
 
       <div class="location-container">
-        <input
-          id="artist-location"
-          type="text"
-          placeholder="Search for your city"
-          autocomplete="off"
-          required
-        >
-
+        <input id="artist-location" type="text" placeholder="Search for your city" autocomplete="off" required>
         <div id="artist-location-results"></div>
       </div>
 
-      <textarea
-        id="artist-bio"
-        placeholder="Short bio"
-      ></textarea>
+      <textarea id="artist-bio" placeholder="Short bio"></textarea>
 
-      <input
-        type="file"
-        id="artist-image"
-        accept="image/*"
-        required
-      >
+      <div id="existing-artwork-section" style="display: none;">
+        <h3>Current Artwork</h3>
+        <p class="main-image-help">Edit details, delete artwork, or choose a different main image.</p>
+        <div id="existing-artwork-list"></div>
+      </div>
 
-      <button type="submit">
-        Post Artist Profile
-      </button>
+      <h3 id="new-artwork-title">Add Artwork</h3>
+      <input type="file" id="artist-images" accept="image/*" multiple required>
 
+      <p class="main-image-help">Select one or more images. Each image can have its own title, description, and optional process video.</p>
+
+      <div id="new-artwork-list"></div>
+
+      <button type="submit" id="artist-submit-button">Post Artist Profile</button>
     </form>
-
   </div>
 
   <div id="artist-grid"></div>
@@ -127,6 +109,16 @@
     No artists yet.
     <br><br>
     <a href="signin.html">Interested in joining? Click here.</a>
+  </div>
+
+  <div id="artwork-modal" style="display: none;">
+    <div id="artwork-modal-content">
+      <button id="close-artwork-modal">×</button>
+      <img id="modal-artwork-image" src="" alt="Artwork">
+      <h2 id="modal-artwork-title"></h2>
+      <p id="modal-artwork-description"></p>
+      <video id="modal-artwork-video" controls style="display: none;"></video>
+    </div>
   </div>
 
 </section>
@@ -155,9 +147,30 @@
   const artistLocationInput = document.getElementById("artist-location");
   const artistLocationResults = document.getElementById("artist-location-results");
 
+  const artistImagesInput = document.getElementById("artist-images");
+  const artistFormTitle = document.getElementById("artist-form-title");
+  const artistSubmitButton = document.getElementById("artist-submit-button");
+  const newArtworkTitle = document.getElementById("new-artwork-title");
+
+  const existingArtworkSection = document.getElementById("existing-artwork-section");
+  const existingArtworkList = document.getElementById("existing-artwork-list");
+  const newArtworkList = document.getElementById("new-artwork-list");
+
+  const artworkModal = document.getElementById("artwork-modal");
+  const closeArtworkModal = document.getElementById("close-artwork-modal");
+  const modalArtworkImage = document.getElementById("modal-artwork-image");
+  const modalArtworkTitle = document.getElementById("modal-artwork-title");
+  const modalArtworkDescription = document.getElementById("modal-artwork-description");
+  const modalArtworkVideo = document.getElementById("modal-artwork-video");
+
   let selectedTag = "All";
   let artistLocationTimeout;
   let profile = null;
+  let editingArtistId = null;
+  let currentEditingArtist = null;
+  let existingMedia = [];
+  let deletedMediaIds = [];
+  let selectedMainSource = { type: "new", index: 0, id: null };
 
   const { data } = await supabase.auth.getSession();
   const session = data.session;
@@ -165,37 +178,228 @@
   if (session) {
     authLink.innerHTML = "<b>Account</b>";
     authLink.href = "dashboard.html";
-
     openArtistFormButton.style.display = "block";
 
-    const { data: profileData } = await supabase
+    const { data: profileData, error: profileError } = await supabase
       .from("profiles")
       .select("profile_name, about_me, location, specialty")
       .eq("id", session.user.id)
       .single();
 
-    profile = profileData;
+    if (!profileError) profile = profileData;
+  }
+
+  function setMainChoice(type, index = null, id = null) {
+    selectedMainSource = { type, index, id };
+
+    document.querySelectorAll(".main-image-radio").forEach((radio) => {
+      radio.checked = false;
+    });
+
+    const selector = type === "existing"
+      ? `.main-image-radio[data-type="existing"][data-id="${id}"]`
+      : `.main-image-radio[data-type="new"][data-index="${index}"]`;
+
+    const selectedRadio = document.querySelector(selector);
+    if (selectedRadio) selectedRadio.checked = true;
+  }
+
+  function resetArtistForm() {
+    artistForm.reset();
+    existingArtworkList.innerHTML = "";
+    newArtworkList.innerHTML = "";
+    existingArtworkSection.style.display = "none";
+    deletedMediaIds = [];
+    existingMedia = [];
+    editingArtistId = null;
+    currentEditingArtist = null;
+    selectedMainSource = { type: "new", index: 0, id: null };
+
+    artistImagesInput.required = true;
+    artistFormTitle.textContent = "Post as an Artist";
+    artistSubmitButton.textContent = "Post Artist Profile";
+    newArtworkTitle.textContent = "Add Artwork";
   }
 
   openArtistFormButton.addEventListener("click", () => {
     const isHidden = artistFormContainer.style.display === "none";
-
     artistFormContainer.style.display = isHidden ? "block" : "none";
+    openArtistFormButton.textContent = isHidden ? "Cancel" : "Post Your Art";
 
-    openArtistFormButton.textContent = isHidden
-      ? "Cancel"
-      : "Post Your Art";
-
-    if (isHidden && profile) {
-      document.getElementById("artist-specialty").value =
-        profile.specialty || "";
-
+    if (isHidden && profile && !editingArtistId) {
+      document.getElementById("artist-specialty").value = profile.specialty || "";
       artistLocationInput.value = profile.location || "";
-
-      document.getElementById("artist-bio").value =
-        profile.about_me || "";
+      document.getElementById("artist-bio").value = profile.about_me || "";
     }
+
+    if (!isHidden) resetArtistForm();
   });
+
+  function renderNewArtworkEditors() {
+    newArtworkList.innerHTML = "";
+    const files = Array.from(artistImagesInput.files);
+
+    files.forEach((file, index) => {
+      const previewUrl = URL.createObjectURL(file);
+      const editor = document.createElement("div");
+      editor.className = "artwork-editor new-media-editor";
+
+      editor.innerHTML = `
+        <img src="${previewUrl}" alt="New artwork preview">
+
+        <label class="main-image-choice">
+          <input
+            type="radio"
+            class="main-image-radio"
+            name="main-image-choice"
+            data-type="new"
+            data-index="${index}"
+          >
+          Use as main image
+        </label>
+
+        <input type="text" class="artwork-title" placeholder="Artwork title">
+        <textarea class="artwork-description" placeholder="Description of this artwork"></textarea>
+
+        <label class="video-upload-label">Optional design process video</label>
+        <input type="file" class="artwork-video" accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm">
+      `;
+
+      editor.querySelector(".main-image-radio").addEventListener("change", () => {
+        setMainChoice("new", index, null);
+      });
+
+      newArtworkList.appendChild(editor);
+    });
+
+    if (!editingArtistId && files.length > 0) {
+      setMainChoice("new", 0, null);
+    }
+  }
+
+  artistImagesInput.addEventListener("change", renderNewArtworkEditors);
+
+  async function loadExistingMediaForEdit(artist) {
+    const { data: media, error } = await supabase
+      .from("artist_media")
+      .select("*")
+      .eq("artist_id", artist.id)
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      console.error(error);
+      alert("Could not load existing artwork for editing.");
+      return;
+    }
+
+    existingMedia = media || [];
+    deletedMediaIds = [];
+    existingArtworkList.innerHTML = "";
+
+    if (existingMedia.length === 0) {
+      existingArtworkSection.style.display = "none";
+      return;
+    }
+
+    existingArtworkSection.style.display = "block";
+
+    existingMedia.forEach((item) => {
+      const editor = document.createElement("div");
+      editor.className = "artwork-editor existing-media-editor";
+      editor.dataset.mediaId = item.id;
+
+      const isMain = item.image_url === artist.image_url;
+
+      editor.innerHTML = `
+        <img src="${item.image_url}" alt="${item.title || "Artwork"}">
+
+        <label class="main-image-choice">
+          <input
+            type="radio"
+            class="main-image-radio"
+            name="main-image-choice"
+            data-type="existing"
+            data-id="${item.id}"
+            ${isMain ? "checked" : ""}
+          >
+          Use as main image
+        </label>
+
+        <input type="text" class="existing-artwork-title" value="${item.title || ""}" placeholder="Artwork title">
+        <textarea class="existing-artwork-description" placeholder="Description of this artwork">${item.description || ""}</textarea>
+
+        ${item.video_url ? `<a href="${item.video_url}" target="_blank" class="existing-video-link">Current video</a>` : ""}
+
+        <label class="video-upload-label">Replace/add process video</label>
+        <input type="file" class="existing-artwork-video" accept="video/*">
+
+        <button type="button" class="delete-media-button">Delete this artwork</button>
+      `;
+
+      editor.querySelector(".main-image-radio").addEventListener("change", () => {
+        setMainChoice("existing", null, item.id);
+      });
+
+      editor.querySelector(".delete-media-button").addEventListener("click", () => {
+        deletedMediaIds.push(item.id);
+        editor.remove();
+
+        if (selectedMainSource.type === "existing" && selectedMainSource.id === item.id) {
+          const firstRemainingExisting = existingArtworkList.querySelector(".main-image-radio[data-type='existing']");
+          const firstNew = newArtworkList.querySelector(".main-image-radio[data-type='new']");
+
+          if (firstRemainingExisting) {
+            setMainChoice("existing", null, firstRemainingExisting.dataset.id);
+          } else if (firstNew) {
+            setMainChoice("new", Number(firstNew.dataset.index), null);
+          } else {
+            selectedMainSource = { type: "existing", index: null, id: null };
+          }
+        }
+      });
+
+      existingArtworkList.appendChild(editor);
+
+      if (isMain) selectedMainSource = { type: "existing", index: null, id: item.id };
+    });
+  }
+
+  async function uploadArtworkVideo(videoFile) {
+    if (!videoFile) return "";
+
+    console.log("Video file:", videoFile);
+    console.log("Video name:", videoFile.name);
+    console.log("Video type:", videoFile.type);
+    console.log("Video size:", videoFile.size);
+
+    const fileExt = videoFile.name.split(".").pop().toLowerCase();
+
+    const fileName = `${session.user.id}/${Date.now()}-${crypto.randomUUID()}.${fileExt}`;
+
+    const contentType =
+      videoFile.type ||
+      (fileExt === "mov" ? "video/quicktime" : "video/mp4");
+
+    const { error: uploadError } = await supabase.storage
+      .from("artist-videos")
+      .upload(fileName, videoFile, {
+        cacheControl: "3600",
+        upsert: false,
+        contentType: contentType
+      });
+
+    if (uploadError) {
+      console.error("Video upload error:", uploadError);
+      alert(uploadError.message || JSON.stringify(uploadError));
+      throw uploadError;
+    }
+
+    const { data: publicData } = supabase.storage
+      .from("artist-videos")
+      .getPublicUrl(fileName);
+
+    return publicData.publicUrl;
+  }
 
   async function loadArtists() {
     let query = supabase
@@ -203,9 +407,7 @@
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (selectedTag !== "All") {
-      query = query.eq("specialty", selectedTag);
-    }
+    if (selectedTag !== "All") query = query.eq("specialty", selectedTag);
 
     const { data: artists, error } = await query;
 
@@ -225,19 +427,101 @@
 
     artists.forEach((artist) => {
       const card = document.createElement("div");
-
       card.className = "artist-card";
 
       card.innerHTML = `
-        ${artist.image_url ? `<img src="${artist.image_url}" alt="${artist.name}">` : ""}
-        <h3>${artist.name}</h3>
+        <div class="artist-card-main">
+          ${artist.image_url ? `<img src="${artist.image_url}" alt="${artist.name}">` : ""}
+          <h3>${artist.name}</h3>
+          <p class="artist-specialty">${artist.specialty}</p>
+          <p class="artist-location">${artist.location || ""}</p>
 
-        <span class="specialty">${artist.specialty}</span>
+          ${session && session.user.id === artist.user_id ? `
+            <button class="edit-artist-button" data-id="${artist.id}">Edit Post</button>
+          ` : ""}
+        </div>
 
-        <p class="location">${artist.location || ""}</p>
-
-        <p class="bio">${artist.bio || ""}</p>
+        <div class="artist-card-expanded">
+          <p class="artist-bio">${artist.bio || ""}</p>
+          <div class="artist-extra-media" id="media-${artist.id}">
+            <p>Loading artwork...</p>
+          </div>
+        </div>
       `;
+
+      card.addEventListener("click", async (e) => {
+        if (e.target.classList.contains("edit-artist-button")) {
+          e.stopPropagation();
+
+          editingArtistId = artist.id;
+          currentEditingArtist = artist;
+
+          artistFormContainer.style.display = "block";
+          openArtistFormButton.textContent = "Cancel";
+          artistFormTitle.textContent = "Edit Artist Post";
+          artistSubmitButton.textContent = "Save Changes";
+          newArtworkTitle.textContent = "Add New Artwork";
+          artistImagesInput.required = false;
+
+          document.getElementById("artist-specialty").value = artist.specialty || "";
+          artistLocationInput.value = artist.location || "";
+          document.getElementById("artist-bio").value = artist.bio || "";
+
+          artistImagesInput.value = "";
+          newArtworkList.innerHTML = "";
+
+          await loadExistingMediaForEdit(artist);
+
+          window.scrollTo({
+            top: artistFormContainer.offsetTop - 100,
+            behavior: "smooth"
+          });
+
+          return;
+        }
+
+        card.classList.toggle("expanded");
+        const mediaContainer = document.getElementById(`media-${artist.id}`);
+
+        if (!card.classList.contains("expanded")) return;
+        if (mediaContainer.dataset.loaded === "true") return;
+
+        const { data: media, error } = await supabase
+          .from("artist_media")
+          .select("*")
+          .eq("artist_id", artist.id)
+          .order("created_at", { ascending: true });
+
+        if (error) {
+          console.error(error);
+          mediaContainer.innerHTML = "<p>Could not load artwork.</p>";
+          return;
+        }
+
+        mediaContainer.innerHTML = "";
+
+        if (media && media.length > 0) {
+          media.forEach((item) => {
+            const mediaCard = document.createElement("div");
+            mediaCard.className = "media-card";
+            mediaCard.innerHTML = `
+              <img src="${item.image_url}" alt="${item.title || "Artwork"}">
+              <h4>${item.title || "Untitled Artwork"}</h4>
+            `;
+
+            mediaCard.addEventListener("click", (event) => {
+              event.stopPropagation();
+              openArtworkModal(item);
+            });
+
+            mediaContainer.appendChild(mediaCard);
+          });
+        } else {
+          mediaContainer.innerHTML = "<p>No artwork added yet.</p>";
+        }
+
+        mediaContainer.dataset.loaded = "true";
+      });
 
       artistGrid.appendChild(card);
     });
@@ -246,18 +530,14 @@
   tags.forEach((tag) => {
     tag.addEventListener("click", () => {
       tags.forEach((t) => t.classList.remove("active-tag"));
-
       tag.classList.add("active-tag");
-
       selectedTag = tag.textContent.trim();
-
       loadArtists();
     });
   });
 
   artistLocationInput.addEventListener("input", () => {
     clearTimeout(artistLocationTimeout);
-
     const query = artistLocationInput.value.trim();
 
     if (query.length < 2) {
@@ -267,44 +547,42 @@
     }
 
     artistLocationTimeout = setTimeout(async () => {
-      const response = await fetch(
-        `https://api.geoapify.com/v1/geocode/autocomplete?text=${encodeURIComponent(query)}&type=city&limit=5&apiKey=${GEOAPIFY_API_KEY}`
-      );
+      try {
+        const response = await fetch(
+          `https://api.geoapify.com/v1/geocode/autocomplete?text=${encodeURIComponent(query)}&type=city&limit=5&apiKey=${GEOAPIFY_API_KEY}`
+        );
 
-      const data = await response.json();
+        const data = await response.json();
+        artistLocationResults.innerHTML = "";
 
-      artistLocationResults.innerHTML = "";
-
-      if (!data.features?.length) {
-        artistLocationResults.style.display = "none";
-        return;
-      }
-
-      data.features.forEach((feature) => {
-        const city = feature.properties.city;
-        const state = feature.properties.state;
-        const country = feature.properties.country;
-
-        if (!city || !country) return;
-
-        const locationText = state
-          ? `${city}, ${state}, ${country}`
-          : `${city}, ${country}`;
-
-        const option = document.createElement("div");
-
-        option.className = "location-option";
-        option.textContent = locationText;
-
-        option.addEventListener("click", () => {
-          artistLocationInput.value = locationText;
+        if (!data.features?.length) {
           artistLocationResults.style.display = "none";
+          return;
+        }
+
+        data.features.forEach((feature) => {
+          const city = feature.properties.city;
+          const state = feature.properties.state;
+          const country = feature.properties.country;
+          if (!city || !country) return;
+
+          const locationText = state ? `${city}, ${state}, ${country}` : `${city}, ${country}`;
+          const option = document.createElement("div");
+          option.className = "location-option";
+          option.textContent = locationText;
+
+          option.addEventListener("click", () => {
+            artistLocationInput.value = locationText;
+            artistLocationResults.style.display = "none";
+          });
+
+          artistLocationResults.appendChild(option);
         });
 
-        artistLocationResults.appendChild(option);
-      });
-
-      artistLocationResults.style.display = "block";
+        artistLocationResults.style.display = "block";
+      } catch (error) {
+        console.error(error);
+      }
     }, 300);
   });
 
@@ -313,6 +591,65 @@
       artistLocationResults.style.display = "none";
     }
   });
+
+  function openArtworkModal(item) {
+    modalArtworkImage.src = item.image_url;
+    modalArtworkTitle.textContent = item.title || "Untitled Artwork";
+    modalArtworkDescription.textContent = item.description || "No description added.";
+
+    if (item.video_url) {
+      modalArtworkVideo.src = item.video_url;
+      modalArtworkVideo.style.display = "block";
+    } else {
+      modalArtworkVideo.removeAttribute("src");
+      modalArtworkVideo.style.display = "none";
+    }
+
+    artworkModal.style.display = "flex";
+  }
+
+  closeArtworkModal.addEventListener("click", () => {
+    artworkModal.style.display = "none";
+    modalArtworkVideo.pause();
+  });
+
+  artworkModal.addEventListener("click", (event) => {
+    if (event.target === artworkModal) {
+      artworkModal.style.display = "none";
+      modalArtworkVideo.pause();
+    }
+  });
+
+  async function uploadFileToBucket(file, bucketName) {
+    if (!file) return "";
+
+    const fileExt = file.name.split(".").pop().toLowerCase();
+    const fileName = `${session.user.id}/${Date.now()}-${crypto.randomUUID()}.${fileExt}`;
+
+    const contentType =
+      file.type ||
+      (fileExt === "mov" ? "video/quicktime" : undefined);
+
+    const { error: uploadError } = await supabase.storage
+      .from(bucketName)
+      .upload(fileName, file, {
+        cacheControl: "3600",
+        upsert: false,
+        contentType
+      });
+
+    if (uploadError) {
+      console.error("Upload error:", uploadError);
+      alert(`Upload failed:\n\n${uploadError.message}`);
+      throw uploadError;
+    }
+
+    const { data: publicData } = supabase.storage
+      .from(bucketName)
+      .getPublicUrl(fileName);
+
+    return publicData.publicUrl;
+  }
 
   artistForm.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -328,56 +665,159 @@
       return;
     }
 
-    const imageFile = document.getElementById("artist-image").files[0];
+    const newImageFiles = Array.from(artistImagesInput.files);
 
-    let imageUrl = "";
-
-    if (imageFile) {
-      const fileExt = imageFile.name.split(".").pop();
-
-      const fileName = `${session.user.id}-${Date.now()}.${fileExt}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("artist-images")
-        .upload(fileName, imageFile);
-
-      if (uploadError) {
-        console.error(uploadError);
-        alert("Failed to upload image.");
-        return;
-      }
-
-      const { data: publicData } = supabase.storage
-        .from("artist-images")
-        .getPublicUrl(fileName);
-
-      imageUrl = publicData.publicUrl;
-    }
-
-    const artist = {
-      user_id: session.user.id,
-      name: profile.profile_name,
-      specialty: document.getElementById("artist-specialty").value,
-      location: artistLocationInput.value,
-      bio: document.getElementById("artist-bio").value,
-      image_url: imageUrl
-    };
-
-    const { error } = await supabase
-      .from("artists")
-      .insert([artist]);
-
-    if (error) {
-      console.error(error);
-      alert("Something went wrong.");
+    if (!editingArtistId && newImageFiles.length === 0) {
+      alert("Please upload at least one artwork image.");
       return;
     }
 
-    artistForm.reset();
+    const remainingExistingEditors = Array.from(existingArtworkList.querySelectorAll(".existing-media-editor"));
+    const newArtworkEditors = Array.from(newArtworkList.querySelectorAll(".new-media-editor"));
 
+    if (editingArtistId && remainingExistingEditors.length === 0 && newImageFiles.length === 0) {
+      alert("Please keep or add at least one artwork image.");
+      return;
+    }
+
+    let artistIdForMedia = editingArtistId;
+    let mainImageUrl = currentEditingArtist?.image_url || "";
+    const newMediaRows = [];
+
+    try {
+      if (selectedMainSource.type === "existing" && selectedMainSource.id) {
+        const mainExistingEditor = existingArtworkList.querySelector(`.existing-media-editor[data-media-id="${selectedMainSource.id}"]`);
+        const mainExistingItem = existingMedia.find((item) => item.id === selectedMainSource.id);
+        if (mainExistingEditor && mainExistingItem) mainImageUrl = mainExistingItem.image_url;
+      }
+
+      if (selectedMainSource.type === "new" && newImageFiles[selectedMainSource.index]) {
+        mainImageUrl = await uploadFileToBucket(newImageFiles[selectedMainSource.index], "artist-images");
+      }
+
+      const artist = {
+        user_id: session.user.id,
+        name: profile.profile_name,
+        specialty: document.getElementById("artist-specialty").value,
+        location: artistLocationInput.value,
+        bio: document.getElementById("artist-bio").value,
+        image_url: mainImageUrl
+      };
+
+      let artistError;
+
+      if (editingArtistId) {
+        const { error: updateError } = await supabase
+          .from("artists")
+          .update(artist)
+          .eq("id", editingArtistId)
+          .eq("user_id", session.user.id);
+
+        artistError = updateError;
+      } else {
+        const { data: insertedArtist, error: insertError } = await supabase
+          .from("artists")
+          .insert([artist])
+          .select()
+          .single();
+
+        artistError = insertError;
+        if (insertedArtist) artistIdForMedia = insertedArtist.id;
+      }
+
+      if (artistError) {
+        console.error(artistError);
+        alert(
+          "Something went wrong while saving artwork:\n\n" +
+          (error?.message || JSON.stringify(error, null, 2))
+        );
+        return;
+      }
+
+      if (editingArtistId && deletedMediaIds.length > 0) {
+        const { error: deleteError } = await supabase
+          .from("artist_media")
+          .delete()
+          .in("id", deletedMediaIds);
+
+        if (deleteError) {
+          console.error(deleteError);
+          alert("Post saved, but deleted artwork could not be removed.");
+          return;
+        }
+      }
+
+      if (editingArtistId) {
+        for (const editor of remainingExistingEditors) {
+          const mediaId = editor.dataset.mediaId;
+          const oldItem = existingMedia.find((item) => item.id === mediaId);
+          const title = editor.querySelector(".existing-artwork-title").value;
+          const description = editor.querySelector(".existing-artwork-description").value;
+          const replacementVideoFile = editor.querySelector(".existing-artwork-video").files[0];
+
+          let videoUrl = oldItem?.video_url || "";
+          if (replacementVideoFile) {
+            videoUrl = await uploadFileToBucket(replacementVideoFile, "artist-videos");
+          }
+
+          const { error: mediaUpdateError } = await supabase
+            .from("artist_media")
+            .update({ title, description, video_url: videoUrl })
+            .eq("id", mediaId);
+
+          if (mediaUpdateError) {
+            console.error(mediaUpdateError);
+            alert("Post saved, but one artwork detail failed to update.");
+          }
+        }
+      }
+
+      for (let i = 0; i < newImageFiles.length; i++) {
+        const editor = newArtworkEditors[i];
+        if (!editor) continue;
+
+        let imageUrl = "";
+
+        if (selectedMainSource.type === "new" && selectedMainSource.index === i) {
+          imageUrl = mainImageUrl;
+        } else {
+          imageUrl = await uploadFileToBucket(newImageFiles[i], "artist-images");
+        }
+
+        const title = editor.querySelector(".artwork-title").value;
+        const description = editor.querySelector(".artwork-description").value;
+        const videoFile = editor.querySelector(".artwork-video").files[0];
+        const videoUrl = videoFile ? await uploadFileToBucket(videoFile, "artist-videos") : "";
+
+        newMediaRows.push({
+          artist_id: artistIdForMedia,
+          image_url: imageUrl,
+          title,
+          description,
+          video_url: videoUrl
+        });
+      }
+
+      if (newMediaRows.length > 0) {
+        const { error: mediaInsertError } = await supabase
+          .from("artist_media")
+          .insert(newMediaRows);
+
+        if (mediaInsertError) {
+          console.error(mediaInsertError);
+          alert("Post saved, but new artwork failed to save.");
+          return;
+        }
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Something went wrong while saving artwork.");
+      return;
+    }
+
+    resetArtistForm();
     artistFormContainer.style.display = "none";
     openArtistFormButton.textContent = "Post Your Art";
-
     loadArtists();
   });
 

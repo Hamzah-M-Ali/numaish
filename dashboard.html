@@ -3,8 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Account - Numaish</title>
 
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" rel="stylesheet">
+
+  <title>My Account - Numaish</title>
   <link rel="stylesheet" href="style.css">
 </head>
 
@@ -114,16 +116,34 @@
   </div>
 </section>
 
+<div id="crop-modal" class="crop-modal">
+  <div class="crop-content">
+
+    <h2>Crop Profile Photo</h2>
+
+    <div class="crop-image-wrapper">
+      <img id="crop-image" src="" alt="Crop image">
+    </div>
+
+    <div class="crop-actions">
+      <button id="cancel-crop" type="button">Cancel</button>
+      <button id="confirm-crop" type="button">Use Photo</button>
+    </div>
+
+  </div>
+</div>
+
 <footer>
   <p>© 2026 Numaish. All rights reserved.</p>
 </footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
 
 <script type="module">
   import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
   const supabaseUrl = "https://oaqmbdfkkxzrznzsfzug.supabase.co";
   const supabaseAnonKey = "sb_publishable_nKY-APQwA4523dOvdBn3Jg_SGBUyMGo";
-
   const GEOAPIFY_API_KEY = "96c65a4245de4a9cbb1b41e3207210d9";
 
   const supabase = createClient(supabaseUrl, supabaseAnonKey);
@@ -149,6 +169,11 @@
   const pfpPreview = document.getElementById("pfp-preview");
   const pfpPlaceholder = document.getElementById("pfp-placeholder");
 
+  const cropModal = document.getElementById("crop-modal");
+  const cropImage = document.getElementById("crop-image");
+  const confirmCrop = document.getElementById("confirm-crop");
+  const cancelCrop = document.getElementById("cancel-crop");
+
   const artworkGrid = document.getElementById("artwork-grid");
   const artworkUpload = document.getElementById("artwork-upload");
 
@@ -156,6 +181,9 @@
   const saveButton = document.getElementById("save-profile-button");
 
   let locationTimeout;
+  let cropper = null;
+  let croppedPfpBlob = null;
+  let currentPfpUrl = null;
 
   userEmail.textContent = `Signed in as ${user.email}`;
 
@@ -177,6 +205,7 @@
       aboutMe.value = data.about_me || "";
       locationInput.value = data.location || "";
       specialty.value = data.specialty || "";
+      currentPfpUrl = data.pfp_url || null;
 
       if (data.pfp_url) {
         pfpPreview.src = data.pfp_url;
@@ -216,9 +245,64 @@
 
     if (!file) return;
 
-    pfpPreview.src = URL.createObjectURL(file);
+    const imageUrl = URL.createObjectURL(file);
+
+    cropImage.src = imageUrl;
+    cropModal.style.display = "flex";
+
+    cropImage.onload = () => {
+      if (cropper) {
+        cropper.destroy();
+      }
+
+      cropper = new Cropper(cropImage, {
+        aspectRatio: 1,
+        viewMode: 0,
+        dragMode: "move",
+        autoCropArea: 0.85,
+        responsive: true,
+        zoomable: true,
+        movable: true,
+        cropBoxMovable: true,
+        cropBoxResizable: true,
+        scalable: true,
+        rotatable: false,
+        background: false,
+        guides: true
+      });
+    };
+  });
+
+  confirmCrop.addEventListener("click", async () => {
+    if (!cropper) return;
+
+    const canvas = cropper.getCroppedCanvas({
+      width: 500,
+      height: 500
+    });
+
+    croppedPfpBlob = await new Promise((resolve) => {
+      canvas.toBlob(resolve, "image/jpeg", 0.9);
+    });
+
+    pfpPreview.src = canvas.toDataURL("image/jpeg");
     pfpPreview.style.display = "block";
     pfpPlaceholder.style.display = "none";
+
+    cropModal.style.display = "none";
+
+    cropper.destroy();
+    cropper = null;
+  });
+
+  cancelCrop.addEventListener("click", () => {
+    cropModal.style.display = "none";
+    pfpUpload.value = "";
+
+    if (cropper) {
+      cropper.destroy();
+      cropper = null;
+    }
   });
 
   artworkUpload.addEventListener("change", async () => {
@@ -276,17 +360,17 @@
     saveButton.disabled = true;
     saveButton.textContent = "Saving...";
 
-    let pfpUrl = pfpPreview.src || null;
+    let pfpUrl = currentPfpUrl;
 
-    const file = pfpUpload.files[0];
-
-    if (file) {
-      const fileExt = file.name.split(".").pop();
-      const filePath = `${user.id}/profile.${fileExt}`;
+    if (croppedPfpBlob) {
+      const filePath = `${user.id}/profile.jpg`;
 
       const { error: uploadError } = await supabase.storage
         .from("profile-pictures")
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, croppedPfpBlob, {
+          upsert: true,
+          contentType: "image/jpeg"
+        });
 
       if (uploadError) {
         message.textContent = uploadError.message;
@@ -302,7 +386,8 @@
         .from("profile-pictures")
         .getPublicUrl(filePath);
 
-      pfpUrl = publicUrlData.publicUrl;
+      pfpUrl = `${publicUrlData.publicUrl}?v=${Date.now()}`;
+      currentPfpUrl = pfpUrl;
     }
 
     const { error } = await supabase
@@ -324,6 +409,7 @@
     } else {
       message.textContent = "✓ Profile saved successfully!";
       message.className = "success-message";
+      croppedPfpBlob = null;
     }
 
     saveButton.disabled = false;
@@ -367,9 +453,11 @@
           const country = feature.properties.country;
 
           if (!city || !country) return;
+
           const locationText = state
             ? `${city}, ${state}, ${country}`
             : `${city}, ${country}`;
+
           const option = document.createElement("div");
 
           option.className = "location-option";
@@ -399,7 +487,6 @@
 
   await loadProfile();
   await loadArtwork();
-
 </script>
 
 </body>
