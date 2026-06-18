@@ -28,6 +28,7 @@
       <a href="discover.html"><b>Discover Artists</b></a>
       <a href="about.html"><b>About Us</b></a>
       <a href="contact.html"><b>Contact</b></a>
+      <a href="messages.html" id="messages-link" style="display: none;"><b>Messages</b></a>
       <a href="signin.html" id="auth-link"><b>Sign in</b></a>
     </nav>
 
@@ -131,6 +132,16 @@
 
       window.location.href = "dashboard.html";
     });
+    const messagesLink = document.getElementById("messages-link");
+
+    if (data.session) {
+      authLink.innerHTML = "<b>Account</b>";
+      authLink.href = "dashboard.html";
+
+      if (messagesLink) {
+        messagesLink.style.display = "inline-block";
+      }
+    }
   </script>
 
 </body>

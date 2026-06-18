@@ -1,0 +1,143 @@
+#conversation-page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 70px 24px;
+    min-height: 70vh;
+}
+
+#back-to-messages {
+    display: inline-block;
+    margin-bottom: 24px;
+    color: #112f5a;
+    text-decoration: none;
+    font-weight: 700;
+}
+
+#conversation-header {
+    background: #fffaf4;
+    border: 1px solid rgba(17, 47, 90, 0.08);
+    border-radius: 24px;
+    padding: 28px;
+    margin-bottom: 24px;
+}
+
+#conversation-title {
+    margin: 0 0 8px;
+    color: #112f5a;
+    font-size: 2.5rem;
+}
+
+#conversation-subtitle {
+    margin: 0;
+    color: #8b7d6b;
+    font-size: 1rem;
+}
+
+#messages-list {
+    background: white;
+    border: 1px solid rgba(17, 47, 90, 0.08);
+    border-radius: 24px;
+    padding: 24px;
+    min-height: 400px;
+    max-height: 550px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.message-row {
+    display: flex;
+}
+
+.message-row.mine {
+    justify-content: flex-end;
+}
+
+.message-row.theirs {
+    justify-content: flex-start;
+}
+
+.message-bubble {
+    max-width: 70%;
+    padding: 14px 18px;
+    border-radius: 18px;
+}
+
+.message-row.mine .message-bubble {
+    background: #112f5a;
+    color: white;
+    border-bottom-right-radius: 6px;
+}
+
+.message-row.theirs .message-bubble {
+    background: #fffaf4;
+    color: #112f5a;
+    border: 1px solid rgba(17, 47, 90, 0.08);
+    border-bottom-left-radius: 6px;
+}
+
+.message-bubble p {
+    margin: 0 0 8px;
+    line-height: 1.4;
+}
+
+.message-bubble span {
+    display: block;
+    font-size: 0.8rem;
+    opacity: 0.7;
+}
+
+#reply-form {
+    margin-top: 24px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-end;
+}
+
+#reply-body {
+    flex: 1;
+    min-height: 90px;
+    padding: 16px;
+    border: 1px solid rgba(17, 47, 90, 0.18);
+    border-radius: 18px;
+    font-family: inherit;
+    font-size: 1rem;
+    resize: vertical;
+}
+
+#reply-form button {
+    padding: 16px 28px;
+    border: none;
+    border-radius: 999px;
+    background: #112f5a;
+    color: white;
+    font-family: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+#reply-form button:hover {
+    background: #1d447c;
+}
+
+#reply-status {
+    margin-top: 12px;
+    color: #112f5a;
+    font-weight: 600;
+}
+
+@media (max-width: 700px) {
+    #conversation-title {
+        font-size: 2rem;
+    }
+
+    #reply-form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .message-bubble {
+        max-width: 85%;
+    }
+}

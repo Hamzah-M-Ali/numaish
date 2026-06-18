@@ -28,6 +28,7 @@
     <a href="discover.html"><b>Discover Artists</b></a>
     <a href="about.html"><b>About Us</b></a>
     <a href="contact.html"><b>Contact</b></a>
+    <a href="messages.html" id="messages-link" style="display: none;"><b>Messages</b></a>
     <a href="signin.html" id="auth-link"><b>Sign in</b></a>
   </nav>
 </header>
@@ -118,9 +119,22 @@
       <h2 id="modal-artwork-title"></h2>
       <p id="modal-artwork-description"></p>
       <video id="modal-artwork-video" controls style="display: none;"></video>
+
     </div>
   </div>
+  <div id="message-modal" style="display:none;">
+    <div id="message-modal-content">
+      <button id="close-message-modal">×</button>
+      <h2 id="message-modal-title"></h2>
 
+      <form id="message-form">
+        <textarea id="message-body" placeholder="Write your message..." required></textarea>
+        <button type="submit">Send Message</button>
+      </form>
+
+      <p id="message-status"></p>
+    </div>
+  </div>
 </section>
 
 <footer>
@@ -162,6 +176,15 @@
   const modalArtworkTitle = document.getElementById("modal-artwork-title");
   const modalArtworkDescription = document.getElementById("modal-artwork-description");
   const modalArtworkVideo = document.getElementById("modal-artwork-video");
+
+  const messageModal = document.getElementById("message-modal");
+  const closeMessageModal = document.getElementById("close-message-modal");
+  const messageForm = document.getElementById("message-form");
+  const messageBody = document.getElementById("message-body");
+  const messageStatus = document.getElementById("message-status");
+  const messageModalTitle = document.getElementById("message-modal-title");
+
+  let currentMessageArtist = null;
 
   let selectedTag = "All";
   let artistLocationTimeout;
@@ -401,6 +424,62 @@
     return publicData.publicUrl;
   }
 
+  messageForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    if (!session) {
+      window.location.href = "signin.html";
+      return;
+    }
+
+    if (!currentMessageArtist) {
+      alert("Artist not found.");
+      return;
+    }
+
+    messageStatus.textContent = "Sending...";
+
+    const { data: conversation, error: conversationError } = await supabase
+      .from("conversations")
+      .upsert(
+        {
+          artist_id: currentMessageArtist.id,
+          buyer_id: session.user.id,
+          seller_id: currentMessageArtist.user_id
+        },
+        {
+          onConflict: "artist_id,buyer_id,seller_id"
+        }
+      )
+      .select()
+      .single();
+
+    if (conversationError) {
+      console.error(conversationError);
+      messageStatus.textContent = "Could not start conversation.";
+      return;
+    }
+
+    const { error: messageError } = await supabase
+      .from("messages")
+      .insert([
+        {
+          conversation_id: conversation.id,
+          sender_id: session.user.id,
+          body: messageBody.value
+        }
+      ]);
+
+    if (messageError) {
+      console.error(messageError);
+      messageStatus.textContent = "Message failed.";
+      return;
+    }
+
+    messageStatus.textContent = "Message sent!";
+    messageBody.value = "";
+  });
+
   async function loadArtists() {
     let query = supabase
       .from("artists")
@@ -443,6 +522,13 @@
 
         <div class="artist-card-expanded">
           <p class="artist-bio">${artist.bio || ""}</p>
+
+          ${
+            session && session.user.id !== artist.user_id
+              ? `<button class="message-artist-button">Message Artist</button>`
+              : ""
+          }
+
           <div class="artist-extra-media" id="media-${artist.id}">
             <p>Loading artwork...</p>
           </div>
@@ -479,6 +565,17 @@
 
           return;
         }
+        if (e.target.classList.contains("message-artist-button")) {
+          e.stopPropagation();
+
+          currentMessageArtist = artist;
+          messageModalTitle.textContent = `Message ${artist.name}`;
+          messageBody.value = "";
+          messageStatus.textContent = "";
+          messageModal.style.display = "flex";
+
+          return;
+        }
 
         card.classList.toggle("expanded");
         const mediaContainer = document.getElementById(`media-${artist.id}`);
@@ -511,7 +608,7 @@
 
             mediaCard.addEventListener("click", (event) => {
               event.stopPropagation();
-              openArtworkModal(item);
+              openArtworkModal(item, artist);
             });
 
             mediaContainer.appendChild(mediaCard);
@@ -592,7 +689,7 @@
     }
   });
 
-  function openArtworkModal(item) {
+  function openArtworkModal(item, artist) {
     modalArtworkImage.src = item.image_url;
     modalArtworkTitle.textContent = item.title || "Untitled Artwork";
     modalArtworkDescription.textContent = item.description || "No description added.";
@@ -604,6 +701,7 @@
       modalArtworkVideo.removeAttribute("src");
       modalArtworkVideo.style.display = "none";
     }
+
 
     artworkModal.style.display = "flex";
   }
@@ -617,6 +715,16 @@
     if (event.target === artworkModal) {
       artworkModal.style.display = "none";
       modalArtworkVideo.pause();
+    }
+  });
+
+  closeMessageModal.addEventListener("click", () => {
+    messageModal.style.display = "none";
+  });
+
+  messageModal.addEventListener("click", (event) => {
+    if (event.target === messageModal) {
+      messageModal.style.display = "none";
     }
   });
 
@@ -822,6 +930,16 @@
   });
 
   loadArtists();
+  const messagesLink = document.getElementById("messages-link");
+
+  if (data.session) {
+    authLink.innerHTML = "<b>Account</b>";
+    authLink.href = "dashboard.html";
+
+    if (messagesLink) {
+      messagesLink.style.display = "inline-block";
+    }
+  }
 </script>
 
 </body>

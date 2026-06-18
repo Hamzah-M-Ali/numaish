@@ -624,3 +624,97 @@
   background: #f7f0e8;
   border-radius: 12px;
 }
+
+.message-artist-button {
+  margin: 18px 0 24px;
+  padding: 12px 22px;
+  border: none;
+  border-radius: 999px;
+  background: #112f5a;
+  color: white;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.message-artist-button:hover {
+  background: #1d447c;
+}
+
+#message-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+#message-modal-content {
+  width: min(520px, 100%);
+  background: #fffaf4;
+  border-radius: 24px;
+  padding: 34px;
+  position: relative;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.25);
+}
+
+#close-message-modal {
+  position: absolute;
+  top: 16px;
+  right: 18px;
+  border: none;
+  background: transparent;
+  font-size: 2rem;
+  cursor: pointer;
+  color: #112f5a;
+}
+
+#message-modal-title {
+  margin: 0 0 18px;
+  color: #112f5a;
+  font-size: 2rem;
+}
+
+#message-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+#message-body {
+  width: 100%;
+  min-height: 150px;
+  padding: 16px;
+  border: 1px solid rgba(17, 47, 90, 0.2);
+  border-radius: 16px;
+  resize: vertical;
+  font-family: inherit;
+  font-size: 1rem;
+  background: white;
+}
+
+#message-form button {
+  padding: 13px 22px;
+  border: none;
+  border-radius: 999px;
+  background: #112f5a;
+  color: white;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#message-form button:hover {
+  background: #1d447c;
+}
+
+#message-status {
+  margin-top: 14px;
+  color: #112f5a;
+  font-weight: 600;
+}

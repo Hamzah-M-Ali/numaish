@@ -23,6 +23,7 @@
     <a href="discover.html"><b>Discover Artists</b></a>
     <a href="about.html"><b>About Us</b></a>
     <a href="contact.html"><b>Contact</b></a>
+    <a href="messages.html" id="messages-link" style="display: none;"><b>Messages</b></a>
     <a href="dashboard.html" id="auth-link"><b>Account</b></a>
   </nav>
 </header>
@@ -147,14 +148,20 @@
   const GEOAPIFY_API_KEY = "96c65a4245de4a9cbb1b41e3207210d9";
 
   const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
+  const authLink = document.getElementById("auth-link");
+  const messagesLink = document.getElementById("messages-link");
   const {
     data: { session }
   } = await supabase.auth.getSession();
 
   if (!session) {
     window.location.href = "signin.html";
+  } else{
+    authLink.innerHTML = "<b>Account</b>";
+    authLink.href = "dashboard.html";
+    messagesLink.style.display = "inline-block";
   }
+  
 
   const user = session.user;
 
@@ -487,6 +494,7 @@
 
   await loadProfile();
   await loadArtwork();
+
 </script>
 
 </body>

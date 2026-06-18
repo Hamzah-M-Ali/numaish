@@ -26,6 +26,7 @@
         <a href="discover.html"><b>Discover Artists</b></a>
         <a href="about.html"><b>About Us</b></a>
         <a href="contact.html"><b>Contact</b></a>
+        <a href="messages.html" id="messages-link" style="display: none;"><b>Messages</b></a>
         <a href="signin.html" id="auth-link"><b>Sign in</b></a>
     </nav>
 
@@ -161,14 +162,25 @@
     const { data } = await supabase.auth.getSession();
 
     const authLink = document.getElementById("auth-link");
+    const messagesLink = document.getElementById("messages-link");
 
-    if (authLink) {
-      if (data.session) {
+    if (data.session) {
+      if (authLink) {
         authLink.innerHTML = "<b>Account</b>";
         authLink.href = "dashboard.html";
-      } else {
+      }
+
+      if (messagesLink) {
+        messagesLink.style.display = "inline-block";
+      }
+    } else {
+      if (authLink) {
         authLink.innerHTML = "<b>Sign in</b>";
         authLink.href = "signin.html";
+      }
+
+      if (messagesLink) {
+        messagesLink.style.display = "none";
       }
     }
   </script>

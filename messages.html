@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Messages - Numaish</title>
+
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="messages.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+<header id="navbar">
+  <div id="logo-container">
+    <a href="index.html">
+      <img src="media/logoN.png" alt="Numaish Logo" id="logo-image">
+    </a>
+  </div>
+
+  <nav id="nav-links">
+    <a href="discover.html"><b>Discover Artists</b></a>
+    <a href="about.html"><b>About Us</b></a>
+    <a href="contact.html"><b>Contact</b></a>
+    <a href="messages.html" id="messages-link"><b>Messages</b></a>
+    <a href="signin.html" id="auth-link"><b>Sign in</b></a>
+  </nav>
+</header>
+
+<section id="messages-page">
+  <div id="messages-header">
+    <h1>Messages</h1>
+    <p>View your conversations with artists and buyers.</p>
+  </div>
+
+  <div id="conversations-list">
+    Loading messages...
+  </div>
+</section>
+
+<footer>
+  <p>© 2026 Numaish. All rights reserved.</p>
+</footer>
+
+<script type="module">
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+  const supabaseUrl = "https://oaqmbdfkkxzrznzsfzug.supabase.co";
+  const supabaseAnonKey = "sb_publishable_nKY-APQwA4523dOvdBn3Jg_SGBUyMGo";
+
+  const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+  const authLink = document.getElementById("auth-link");
+  const conversationsList = document.getElementById("conversations-list");
+
+  const {
+    data: { session }
+  } = await supabase.auth.getSession();
+
+  if (!session) {
+    window.location.href = "signin.html";
+  }
+
+  authLink.innerHTML = "<b>Account</b>";
+  authLink.href = "dashboard.html";
+
+  const currentUserId = session.user.id;
+
+  async function loadConversations() {
+    const { data: conversations, error } = await supabase
+      .from("conversations")
+      .select(`
+        id,
+        artist_id,
+        buyer_id,
+        seller_id,
+        created_at
+      `)
+      .or(`buyer_id.eq.${currentUserId},seller_id.eq.${currentUserId}`)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error(error);
+      conversationsList.innerHTML = "<p>Could not load conversations.</p>";
+      return;
+    }
+
+    if (!conversations || conversations.length === 0) {
+      conversationsList.innerHTML = `
+        <div class="empty-messages">
+          <h2>No messages yet</h2>
+          <p>When you message an artist, your conversation will appear here.</p>
+          <a href="discover.html">Discover artists</a>
+        </div>
+      `;
+      return;
+    }
+
+    conversationsList.innerHTML = "";
+
+    for (const conversation of conversations) {
+      const otherUserId =
+        currentUserId === conversation.seller_id
+          ? conversation.buyer_id
+          : conversation.seller_id;
+
+      const { data: otherUser } = await supabase
+        .from("profiles")
+        .select("profile_name, pfp_url")
+        .eq("id", otherUserId)
+        .maybeSingle();
+
+    let displayName = otherUser?.profile_name;
+    let displayPhoto = otherUser?.pfp_url;
+
+    if (!displayName && conversation.artist_id) {
+        const { data: artist } = await supabase
+            .from("artists")
+            .select("name, image_url")
+            .eq("id", conversation.artist_id)
+            .maybeSingle();
+
+        displayName = artist?.name || "Unknown User";
+        displayPhoto = artist?.image_url || "";
+    }
+
+      const { data: lastMessages, error: messageError } = await supabase
+        .from("messages")
+        .select("body, sender_id, created_at")
+        .eq("conversation_id", conversation.id)
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      let preview = "No messages yet.";
+      let timeText = "";
+
+      if (!messageError && lastMessages && lastMessages.length > 0) {
+        preview = lastMessages[0].body;
+        timeText = new Date(lastMessages[0].created_at).toLocaleString();
+      }
+
+      const otherPersonLabel =
+        currentUserId === conversation.seller_id
+          ? "Buyer conversation"
+          : "Artist conversation";
+
+      const card = document.createElement("a");
+      card.className = "conversation-card";
+      card.href = `conversation.html?id=${conversation.id}`;
+
+      card.innerHTML = `
+        <div class="conversation-image">
+          ${
+            displayPhoto
+              ? `<img src="${displayPhoto}" alt="${displayName || "User"}">`
+              : `<span>${(displayName || "U").charAt(0)}</span>`
+          }
+        </div>
+
+        <div class="conversation-info">
+          <h2>${displayName}</h2>
+          <p class="conversation-type">${otherPersonLabel}</p>
+          <p class="conversation-preview">${preview}</p>
+        </div>
+
+        <div class="conversation-time">
+          ${timeText}
+        </div>
+      `;
+
+      conversationsList.appendChild(card);
+    }
+  }
+
+  loadConversations();
+</script>
+
+</body>
+</html>

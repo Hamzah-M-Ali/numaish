@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Conversation - Numaish</title>
+
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="conversation.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+<header id="navbar">
+    <div id="logo-container">
+        <a href="index.html">
+            <img src="media/logoN.png" alt="Numaish Logo" id="logo-image">
+        </a>
+    </div>
+
+    <nav id="nav-links">
+        <a href="discover.html"><b>Discover Artists</b></a>
+        <a href="about.html"><b>About Us</b></a>
+        <a href="contact.html"><b>Contact</b></a>
+        <a href="messages.html" id="messages-link"><b>Messages</b></a>
+        <a href="signin.html" id="auth-link"><b>Sign in</b></a>
+    </nav>
+</header>
+
+<section id="conversation-page">
+    <a href="messages.html" id="back-to-messages">← Back to Messages</a>
+
+    <div id="conversation-header">
+        <h1 id="conversation-title">Loading...</h1>
+        <p id="conversation-subtitle"></p>
+    </div>
+
+    <div id="messages-list">
+        Loading conversation...
+    </div>
+
+    <form id="reply-form">
+        <textarea id="reply-body" placeholder="Write a message..." required></textarea>
+        <button type="submit">Send</button>
+    </form>
+
+    <p id="reply-status"></p>
+</section>
+
+<footer>
+    <p>© 2026 Numaish. All rights reserved.</p>
+</footer>
+
+<script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+    const supabaseUrl = "https://oaqmbdfkkxzrznzsfzug.supabase.co";
+    const supabaseAnonKey = "sb_publishable_nKY-APQwA4523dOvdBn3Jg_SGBUyMGo";
+
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+    const authLink = document.getElementById("auth-link");
+    const conversationTitle = document.getElementById("conversation-title");
+    const conversationSubtitle = document.getElementById("conversation-subtitle");
+    const messagesList = document.getElementById("messages-list");
+    const replyForm = document.getElementById("reply-form");
+    const replyBody = document.getElementById("reply-body");
+    const replyStatus = document.getElementById("reply-status");
+
+    const params = new URLSearchParams(window.location.search);
+    const conversationId = params.get("id");
+
+    const {
+        data: { session }
+    } = await supabase.auth.getSession();
+
+    if (!session) {
+        window.location.href = "signin.html";
+    }
+
+    authLink.innerHTML = "<b>Account</b>";
+    authLink.href = "dashboard.html";
+
+    const currentUserId = session.user.id;
+
+    if (!conversationId) {
+        messagesList.innerHTML = "<p>No conversation selected.</p>";
+        replyForm.style.display = "none";
+        throw new Error("Missing conversation id");
+    }
+
+    let conversation = null;
+    let otherUser = null;
+
+    async function loadConversationInfo() {
+        const { data, error } = await supabase
+            .from("conversations")
+            .select(`
+                id,
+                artist_id,
+                buyer_id,
+                seller_id,
+                created_at
+            `)
+            .eq("id", conversationId)
+            .single();
+
+        if (error || !data) {
+            console.error(error);
+            messagesList.innerHTML = "<p>Could not load conversation.</p>";
+            replyForm.style.display = "none";
+            return;
+        }
+
+        if (data.buyer_id !== currentUserId && data.seller_id !== currentUserId) {
+            messagesList.innerHTML = "<p>You do not have access to this conversation.</p>";
+            replyForm.style.display = "none";
+            return;
+        }
+
+        conversation = data;
+
+        const otherUserId =
+            currentUserId === conversation.seller_id
+                ? conversation.buyer_id
+                : conversation.seller_id;
+
+        const { data: profileData } = await supabase
+            .from("profiles")
+            .select("profile_name, pfp_url")
+            .eq("id", otherUserId)
+            .single();
+
+        otherUser = profileData;
+
+        conversationTitle.textContent = otherUser?.profile_name || "User";
+        conversationSubtitle.textContent =
+            currentUserId === conversation.seller_id
+                ? "Buyer conversation"
+                : "Artist conversation";
+    }
+
+    async function loadMessages() {
+        const { data: messages, error } = await supabase
+            .from("messages")
+            .select("id, conversation_id, sender_id, body, created_at")
+            .eq("conversation_id", conversationId)
+            .order("created_at", { ascending: true });
+
+        if (error) {
+            console.error(error);
+            messagesList.innerHTML = "<p>Could not load messages.</p>";
+            return;
+        }
+
+        if (!messages || messages.length === 0) {
+            messagesList.innerHTML = "<p>No messages yet.</p>";
+            return;
+        }
+
+        messagesList.innerHTML = "";
+
+        messages.forEach((message) => {
+            const isMine = message.sender_id === currentUserId;
+
+            const messageCard = document.createElement("div");
+            messageCard.className = isMine ? "message-row mine" : "message-row theirs";
+
+            messageCard.innerHTML = `
+                <div class="message-bubble">
+                    <p>${message.body}</p>
+                    <span>${new Date(message.created_at).toLocaleString()}</span>
+                </div>
+            `;
+
+            messagesList.appendChild(messageCard);
+        });
+
+        messagesList.scrollTop = messagesList.scrollHeight;
+    }
+
+    replyForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        if (!conversation) {
+            replyStatus.textContent = "Conversation not loaded.";
+            return;
+        }
+
+        const body = replyBody.value.trim();
+
+        if (!body) return;
+
+        replyStatus.textContent = "Sending...";
+
+        const { error } = await supabase
+            .from("messages")
+            .insert([
+                {
+                    conversation_id: conversationId,
+                    sender_id: currentUserId,
+                    body
+                }
+            ]);
+
+        if (error) {
+            console.error(error);
+            replyStatus.textContent = "Message failed.";
+            return;
+        }
+
+        replyBody.value = "";
+        replyStatus.textContent = "";
+        await loadMessages();
+    });
+
+    await loadConversationInfo();
+
+    if (conversation) {
+        await loadMessages();
+    }
+</script>
+
+</body>
+</html>
