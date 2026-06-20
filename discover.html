@@ -516,7 +516,15 @@
           <p class="artist-location">${artist.location || ""}</p>
 
           ${session && session.user.id === artist.user_id ? `
-            <button class="edit-artist-button" data-id="${artist.id}">Edit Post</button>
+            <div class="owner-actions">
+              <button class="edit-artist-button" data-id="${artist.id}">
+                Edit Post
+              </button>
+
+              <button class="delete-artist-button" data-id="${artist.id}">
+                Delete Post
+              </button>
+            </div>
           ` : ""}
         </div>
 
@@ -536,6 +544,40 @@
       `;
 
       card.addEventListener("click", async (e) => {
+        if (e.target.classList.contains("delete-artist-button")) {
+          e.stopPropagation();
+
+          const confirmed = confirm(
+            "Are you sure you want to permanently delete this post?"
+          );
+
+          if (!confirmed) return;
+
+          try {
+            const { error: mediaError } = await supabase
+              .from("artist_media")
+              .delete()
+              .eq("artist_id", artist.id);
+
+            if (mediaError) throw mediaError;
+
+            const { error: artistError } = await supabase
+              .from("artists")
+              .delete()
+              .eq("id", artist.id)
+              .eq("user_id", session.user.id);
+
+            if (artistError) throw artistError;
+
+            await loadArtists();
+
+          } catch (error) {
+            console.error("Delete failed:", error);
+            alert(`Delete failed: ${error.message}`);
+          }
+
+          return;
+        }
         if (e.target.classList.contains("edit-artist-button")) {
           e.stopPropagation();
 

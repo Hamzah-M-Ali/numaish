@@ -718,3 +718,52 @@
   color: #112f5a;
   font-weight: 600;
 }
+
+.owner-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.edit-artist-button,
+.delete-artist-button {
+  width: 120px;
+  height: 44px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  padding: 0;
+  border: none;
+  border-radius: 10px;
+
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.edit-artist-button {
+  background: #d8b26e;
+  color: #2b1a12;
+}
+
+.delete-artist-button {
+  background: #8f2f2f;
+  color: white;
+}
+.owner-actions .edit-artist-button,
+.owner-actions .delete-artist-button {
+  margin-top: 0 !important;
+  width: 115px;
+  height: 42px;
+  padding: 0;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+}
